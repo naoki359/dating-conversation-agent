@@ -1,7 +1,10 @@
 from typing import List, Optional
+from functools import lru_cache
 
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
+
+from app.agent.core.graph.build_graph import build_graph
 
 app = FastAPI(title="Dating Conversation Agent")
 
@@ -16,6 +19,12 @@ class ReplyResponse(BaseModel):
     reply_reasoning: Optional[str] = None
 
 
+@lru_cache(maxsize=1)
+def get_graph():
+    print("get_graph() called")
+    return build_graph()
+
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
@@ -23,8 +32,11 @@ def health_check():
 
 @app.post("/reply", response_model=ReplyResponse)
 def generate_reply(request: ReplyRequest):
-    # ダミー処理（リクエスト確認用）
+    graph = get_graph()
+
+    result = graph.invoke(request)
+
     return ReplyResponse(
-        generated_reply="テスト返信です！ちゃんとリクエスト受け取れてます 👍",
-        reply_reasoning=f"履歴件数: {len(request.conversation_history)}件",
+        generated_reply=result["generated_reply"],
+        reply_reasoning=result["reply_reasoning"],
     )
