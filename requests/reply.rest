@@ -1,0 +1,54 @@
+@baseUrl = http://127.0.0.1:8000
+
+### 正常系：シンプルな会話
+POST {{baseUrl}}/reply
+Content-Type: application/json
+
+{
+  "partner_profile": "映画とカフェ巡りが好き。休日はのんびり過ごすことが多い。",
+  "conversation_history": [
+    "自分: はじめまして、プロフィール見て気になりました！",
+    "相手: ありがとうございます、うれしいです！",
+    "自分: 映画好きなんですね。最近何か観ましたか？",
+    "相手: 最近はミステリー系をよく観てます！"
+  ]
+}
+
+
+### パターン②：短い会話
+POST {{baseUrl}}/reply
+Content-Type: application/json
+
+{
+  "partner_profile": "旅行が好き",
+  "conversation_history": [
+    "こんにちは！"
+  ]
+}
+
+
+### パターン③：履歴なし（エッジケース）
+POST {{baseUrl}}/reply
+Content-Type: application/json
+
+{
+  "partner_profile": "読書が趣味",
+  "conversation_history": []
+}
+
+
+### パターン④：長めの履歴
+POST {{baseUrl}}/reply
+Content-Type: application/json
+
+{
+  "partner_profile": "カフェ巡りとスイーツが好き",
+  "conversation_history": [
+    "自分: はじめまして！",
+    "相手: はじめまして！",
+    "自分: 甘いもの好きなんですね！",
+    "相手: はい、特にケーキが好きです",
+    "自分: いいですね！最近行ったカフェとかありますか？",
+    "相手: 渋谷のカフェに行きました！"
+  ]
+}
