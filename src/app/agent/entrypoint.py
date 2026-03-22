@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
 from app.agent.core.graph.build_graph import build_graph
+from app.agent.repositories.yaml_user_repository import load_agent_state
 
 app = FastAPI(title="Dating Conversation Agent")
 
@@ -34,18 +35,10 @@ def health_check():
 def generate_reply(request: ReplyRequest):
     graph = get_graph()
 
-    state = {
-        "profile_summary": request.partner_profile,
-        "messages": [
-            {
-                "id": f"m{i+1:03d}",
-                "timestamp": "",
-                "sender": "partner" if i % 2 == 0 else "self",
-                "message": message,
-            }
-            for i, message in enumerate(request.conversation_history)
-        ],
-    }
+    # 仮：固定IDで読み込み
+    state = load_agent_state("with_0001")
+
+    print("Loaded AgentState:", state)
 
     result = graph.invoke(state)
 
