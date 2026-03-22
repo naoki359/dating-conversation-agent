@@ -34,9 +34,22 @@ def health_check():
 def generate_reply(request: ReplyRequest):
     graph = get_graph()
 
-    result = graph.invoke(request)
+    state = {
+        "profile_summary": request.partner_profile,
+        "messages": [
+            {
+                "id": f"m{i+1:03d}",
+                "timestamp": "",
+                "sender": "partner" if i % 2 == 0 else "self",
+                "message": message,
+            }
+            for i, message in enumerate(request.conversation_history)
+        ],
+    }
+
+    result = graph.invoke(state)
 
     return ReplyResponse(
-        generated_reply=result["generated_reply"],
-        reply_reasoning=result["reply_reasoning"],
+        generated_reply="",
+        reply_reasoning=result.get("action_reasoning"),
     )
