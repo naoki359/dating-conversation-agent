@@ -19,24 +19,28 @@ profile:
 
 conversation:
   messages:
-    - timestamp: 2026-03-21T19:00:00+09:00
+    - id: m001
+      timestamp: 2026-03-21T19:00:00+09:00
       sender: self
       message: |
         はじめまして！
         プロフィール見て気になりました。
 
-    - timestamp: 2026-03-21T19:03:00+09:00
+    - id: m002
+      timestamp: 2026-03-21T19:03:00+09:00
       sender: other
       message: |
         ありがとうございます、うれしいです☺️
 
-    - timestamp: 2026-03-21T19:06:00+09:00
+    - id: m003
+      timestamp: 2026-03-21T19:06:00+09:00
       sender: self
       message: |
         映画お好きなんですね。
         最近何か観ましたか？
 
-    - timestamp: 2026-03-21T19:10:00+09:00
+    - id: m004
+      timestamp: 2026-03-21T19:10:00+09:00
       sender: other
       message: |
         最近は韓国映画をよく観てます！
