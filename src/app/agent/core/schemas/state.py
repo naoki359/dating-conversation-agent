@@ -5,8 +5,8 @@ from typing import Literal, NotRequired, TypedDict
 class Message(TypedDict):
     id: str  # 例: "m001"
     timestamp: str  # 例: "2026-03-21T19:00:00+09:00"
-    sender: Literal["self", "other"]  # YAMLに合わせる
-    message: str  # 実際の発言
+    sender: Literal["self", "other"]  # 自分 or 相手
+    message: str  # 実際の発言内容
 
 
 # ===== Profile =====
@@ -33,7 +33,7 @@ class Conversation(TypedDict):
 
 # ===== AgentState =====
 class AgentState(TypedDict):
-    # ===== 元データ（YAMLそのまま） =====
+    # ===== 元データ（YAMLから読み込む情報） =====
 
     user_id: NotRequired[str]
     # 例: "with_0001"
@@ -53,15 +53,32 @@ class AgentState(TypedDict):
     # 会話はまだ初期段階なので、興味に寄せて話題を広げるのが良い。"
 
 
+    # ===== ReAct: Task Discovery =====
+
+    required_tasks: NotRequired[list[str]]
+    # 例:
+    # [
+    #   "相手の興味を整理する",
+    #   "次の返信方針を決める",
+    #   "会話を広げる返信を生成する"
+    # ]
+    #
+    # 現在の状況に対して必要だと考えられるタスク一覧。
+    # 今すぐ実行しない候補も含めて広めに保持する。
+
+
     # ===== ReAct: Decision =====
 
     decided_action: NotRequired[str]
     # 例:
-    # "generate_reply"
+    # "会話を広げる返信を生成する"
+    #
+    # required_tasks の中から、今回このステップで実際に選んだタスク。
 
     action_reasoning: NotRequired[str]
     # 例:
-    # "会話継続のため、相手の好きな映画ジャンルに関連した質問を返すのが適切。"
+    # "相手の興味に寄せた質問を返すことで、
+    # 会話を継続しやすくなるため。"
 
 
     # ===== Action結果 =====
