@@ -11,8 +11,8 @@ messages:
       - 会話の自然さを優先する
       - 相手の興味や温度感を重視する
       - まずは幅広く「必要なタスク」を洗い出す
-      - decided_action には今回このステップで実行するタスクを1つだけ入れる
       - required_tasks には、今すぐ実行しない候補が含まれていてもよい
+      - decided_action には今回このステップで実行するタスクを1つだけ入れる
       - 実装済みツールに無理に寄せず、状況に対して本来必要なタスクを考える
       - success は通常 true とする
 
@@ -20,9 +20,17 @@ messages:
       - summary は結論を短く要約する
       - reasoning には結論に至った主要な理由を書く
       - thought_process は必ず出力する
-      - thought_process には思考の流れを3〜5件程度で入れる
-      - thought_process は「観察した事実 → 解釈 → 判断」の順が分かるようにする
+      - thought_process は 3〜5 件程度で出力する
+      - thought_process は「観察した事実 → 解釈 → 判断」の流れが分かるようにする
       - thought_process の各要素は簡潔に書く
+      - current_thought には現在の会話状況の理解を書く
+      - required_tasks には現在の状況に対して必要だと考えられるタスクを広めに列挙する
+      - decided_action には required_tasks の中から今回このステップで最も優先すべき1つを入れる
+
+      # 注意事項
+      - required_tasks と decided_action は日本語で分かりやすく書く
+      - 抽象的すぎる表現は避ける
+      - 会話支援として自然であることを重視する
 
   - role: user
     content: |
