@@ -1,0 +1,93 @@
+user_id: with_0007
+
+profile:
+  name: さやか
+  age: 28
+  profile_summary: 映画・カフェ好き、落ち着いた性格
+
+conversation:
+  messages:
+    - id: m001
+      timestamp: 2026-03-21T11:00:00+09:00
+      sender: self
+      message: |
+        はじめまして！
+        プロフィール見て気になりました😊
+
+    - id: m002
+      timestamp: 2026-03-21T11:05:00+09:00
+      sender: other
+      message: |
+        ありがとうございます☺️
+
+    - id: m003
+      timestamp: 2026-03-21T11:10:00+09:00
+      sender: self
+      message: |
+        カフェ巡りが好きなんですね！
+        よく行くエリアとかありますか？
+
+    - id: m004
+      timestamp: 2026-03-21T11:15:00+09:00
+      sender: other
+      message: |
+        表参道とか代官山が多いです☕️
+        落ち着いた雰囲気のお店が好きで！
+
+    - id: m005
+      timestamp: 2026-03-21T11:18:00+09:00
+      sender: self
+      message: |
+        いいですね！
+        僕もその辺りたまに行きます
+
+    - id: m006
+      timestamp: 2026-03-21T11:22:00+09:00
+      sender: other
+      message: |
+        本当ですか！
+        おすすめのお店とかありますか？😊
+
+    - id: m007
+      timestamp: 2026-03-21T11:27:00+09:00
+      sender: self
+      message: |
+        最近だと○○っていうカフェが良かったです！
+        雰囲気も落ち着いてて居心地よかったです
+
+    - id: m008
+      timestamp: 2026-03-21T11:35:00+09:00
+      sender: other
+      message: |
+        気になります！
+        今度行ってみます☺️
+
+    - id: m009
+      timestamp: 2026-03-21T11:40:00+09:00
+      sender: self
+      message: |
+        ぜひぜひ！
+        さやかさんのおすすめも気になります
+
+    - id: m010
+      timestamp: 2026-03-21T11:45:00+09:00
+      sender: other
+      message: |
+        いくつかあるんですけど、
+        静かでゆっくりできるところが好きで…☕️
+
+    - id: m011
+      timestamp: 2026-03-21T11:50:00+09:00
+      sender: self
+      message: |
+        いいですね！
+        ゆっくりできるカフェいいですよね
+
+    - id: m012
+      timestamp: 2026-03-21T11:55:00+09:00
+      sender: other
+      message: |
+        そうなんです☺️
+        つい長居しちゃいます笑
+
+  updated_at: 2026-03-21T11:55:00+09:00

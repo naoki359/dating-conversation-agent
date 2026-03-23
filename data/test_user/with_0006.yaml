@@ -1,0 +1,42 @@
+user_id: with_0006
+
+profile:
+  name: さやか
+  age: 28
+  profile_summary: 韓国映画好き、カフェ巡り
+
+conversation:
+  messages:
+    - id: m001
+      timestamp: 2026-03-20T19:00:00+09:00
+      sender: self
+      message: |
+        はじめまして！
+        韓国映画好きなんですね😊
+
+    - id: m002
+      timestamp: 2026-03-20T19:05:00+09:00
+      sender: other
+      message: |
+        はい！最近ハマってます☺️
+
+    - id: m003
+      timestamp: 2026-03-20T19:10:00+09:00
+      sender: self
+      message: |
+        おすすめあれば教えてほしいです！
+
+    - id: m004
+      timestamp: 2026-03-20T19:20:00+09:00
+      sender: other
+      message: |
+        「オールドボーイ」とか好きです！
+
+    - id: m005
+      timestamp: 2026-03-20T19:25:00+09:00
+      sender: self
+      message: |
+        気になってました！
+        観てみます😊
+
+  updated_at: 2026-03-20T19:25:00+09:00

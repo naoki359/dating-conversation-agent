@@ -11,8 +11,7 @@ app = FastAPI(title="Dating Conversation Agent")
 
 
 class ReplyRequest(BaseModel):
-    partner_profile: str = Field(..., description="相手プロフィール")
-    conversation_history: List[str] = Field(..., description="会話履歴")
+    id: str = Field(..., description="会話のID")
 
 
 class ReplyResponse(BaseModel):
@@ -36,7 +35,7 @@ def generate_reply(request: ReplyRequest):
     graph = get_graph()
 
     # 仮：固定IDで読み込み
-    state = load_agent_state("with_0001")
+    state = load_agent_state(request.id)
 
     # print("Loaded AgentState:", state)
 

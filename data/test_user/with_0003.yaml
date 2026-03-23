@@ -1,0 +1,23 @@
+user_id: with_0003
+
+profile:
+  name: さやか
+  age: 28
+  profile_summary: 映画好き、カフェ巡り、落ち着いた性格
+
+conversation:
+  messages:
+    - id: m001
+      timestamp: 2026-03-21T20:00:00+09:00
+      sender: self
+      message: |
+        はじめまして！
+        プロフィール見て気になりました😊
+
+    - id: m002
+      timestamp: 2026-03-21T20:10:00+09:00
+      sender: other
+      message: |
+        ありがとうございます！
+
+  updated_at: 2026-03-21T20:10:00+09:00

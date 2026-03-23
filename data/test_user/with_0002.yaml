@@ -1,0 +1,58 @@
+user_id: with_0002
+
+profile:
+  name: さやか
+  age: 28
+  profile_summary: 映画好き（韓国サスペンス）、カフェ巡り、落ち着いた性格
+
+conversation:
+  messages:
+    - id: m001
+      timestamp: 2026-03-21T19:00:00+09:00
+      sender: self
+      message: |
+        はじめまして！
+        プロフィール見て気になりました。
+
+    - id: m002
+      timestamp: 2026-03-21T19:03:00+09:00
+      sender: other
+      message: |
+        ありがとうございます☺️
+
+    - id: m003
+      timestamp: 2026-03-21T19:05:00+09:00
+      sender: self
+      message: |
+        韓国映画好きなんですね！
+        最近観た中でおすすめありますか？
+
+    - id: m004
+      timestamp: 2026-03-21T19:09:00+09:00
+      sender: other
+      message: |
+        最近だと「パラサイト」とか好きでした！
+        ああいう伏線回収系が好きです😂
+
+    - id: m005
+      timestamp: 2026-03-21T19:12:00+09:00
+      sender: self
+      message: |
+        あれ面白いですよね！
+        観終わったあと考察したくなる系いいですよね
+
+    - id: m006
+      timestamp: 2026-03-21T19:15:00+09:00
+      sender: other
+      message: |
+        そうなんです！
+        余韻が残る作品が好きで☺️
+
+    - id: m007
+      timestamp: 2026-03-21T19:18:00+09:00
+      sender: self
+      message: |
+        いいですね！
+        普段は映画館派ですか？それとも家で観ることが多いですか？
+
+  updated_at: 2026-03-21T19:18:00+09:00
