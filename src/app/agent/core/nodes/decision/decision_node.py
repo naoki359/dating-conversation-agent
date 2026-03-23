@@ -1,47 +1,107 @@
+from __future__ import annotations
+
+from pathlib import Path
+from textwrap import dedent
+
 from app.agent.core.nodes.base_node import BaseNode
 from app.agent.core.nodes.decision.output_schema import DecisionOutputSchema
 from app.agent.core.schemas.state import AgentState
+from app.agent.core.services.llm_client import get_chat_model_gpt5_4
+from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 
 
 class DecisionNode(BaseNode):
     node_name = "decision_node"
 
+    def __init__(self) -> None:
+        self.llm = get_chat_model_gpt5_4()
+        self.prompt = load_prompt_from_yaml(self._get_prompt_path())
+
     def execute(self, state: AgentState) -> DecisionOutputSchema:
-        messages = state.get("messages", [])
-        latest_context_summary = state.get("latest_context_summary", "")
+        profile_text = self._build_profile_text(state)
+        conversation_text = self._build_conversation_text(state)
+
+        prompt_value = self.prompt.invoke(
+            {
+                "node_name": self.node_name,
+                "profile_text": profile_text,
+                "conversation_text": conversation_text,
+            }
+        )
+
+        structured_llm = self.llm.with_structured_output(DecisionOutputSchema)
+        result = structured_llm.invoke(prompt_value)
+
+        result.node_name = self.node_name
+        return result
+
+    def _get_prompt_path(self) -> Path:
+        return Path(__file__).resolve().parent / "prompt.yaml"
+
+    def _build_profile_text(self, state: AgentState) -> str:
+        profile = state.get("profile", {})
+
+        name = profile.get("name", "")
+        age = profile.get("age", "")
+        raw_profile_text = profile.get("raw_profile_text", "")
+        profile_summary = profile.get("profile_summary", "")
+
+        return dedent(
+            f"""
+            [プロフィール基本情報]
+            名前: {name}
+            年齢: {age}
+
+            [プロフィール要約]
+            {profile_summary}
+
+            [プロフィール原文]
+            {raw_profile_text}
+            """
+        ).strip()
+
+    def _build_conversation_text(self, state: AgentState) -> str:
+        conversation = state.get("conversation", {})
+        messages = conversation.get("messages", [])
 
         if not messages:
-            return DecisionOutputSchema(
-                node_name=self.node_name,
-                success=True,
-                log_message="会話履歴がないため wait を選択しました。",
-                decided_action="wait",
-                action_reasoning="会話履歴が存在しないため、返信生成はまだ行えない。",
-                reply_focus_points=[],
+            return "会話履歴はありません。"
+
+        lines: list[str] = []
+        for msg in messages:
+            message_id = msg.get("id", "")
+            timestamp = msg.get("timestamp", "")
+            sender = msg.get("sender", "")
+            message = msg.get("message", "")
+
+            lines.append(
+                dedent(
+                    f"""
+                    - id: {message_id}
+                      timestamp: {timestamp}
+                      sender: {sender}
+                      message:
+                    {self._indent_block(message, 4)}
+                    """
+                ).rstrip()
             )
 
-        if not latest_context_summary:
-            return DecisionOutputSchema(
-                node_name=self.node_name,
-                success=True,
-                log_message="コンテキスト要約がないため summarize_context を選択しました。",
-                decided_action="summarize_context",
-                action_reasoning="最新会話の要約が未作成のため、先に文脈整理を行う。",
-                reply_focus_points=[],
-            )
+        updated_at = conversation.get("updated_at", "")
 
-        return DecisionOutputSchema(
-            node_name=self.node_name,
-            success=True,
-            log_message="返信生成アクションを選択しました。",
-            decided_action="generate_reply",
-            action_reasoning=(
-                "会話履歴と最新コンテキスト要約が存在するため、"
-                "次のアクションとして返信生成を行う。"
-            ),
-            reply_focus_points=[
-                "自然な温度感で返す",
-                "会話を続けやすくする",
-                "必要に応じて軽い質問を含める",
-            ],
-        )
+        history_text = "\n".join(lines)
+
+        return dedent(
+            f"""
+            [会話更新日時]
+            {updated_at}
+
+            [会話履歴]
+            {history_text}
+            """
+        ).strip()
+
+    @staticmethod
+    def _indent_block(text: str, spaces: int) -> str:
+        indent = " " * spaces
+        lines = text.splitlines() or [text]
+        return "\n".join(f"{indent}{line}" for line in lines)

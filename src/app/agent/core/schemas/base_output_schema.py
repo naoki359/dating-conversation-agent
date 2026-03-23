@@ -6,24 +6,29 @@ class BaseOutputSchema(BaseModel):
         ...,
         description="この出力を生成したノード名。",
     )
-    
+
     success: bool = Field(
         ...,
-        description="ノードの処理が成功したかどうか。正常に判断・生成できた場合は true。",
+        description="ノードの処理が成功したかどうか。",
+    )
+
+    summary: str = Field(
+        ...,
+        description="このノードの結論を短く要約したもの。",
     )
 
     reasoning: str = Field(
         ...,
         description=(
-            "このノードがその結論や出力に至った理由。"
-            "後から判断根拠を確認できるよう、簡潔かつ具体的に記載する。"
+            "このノードがその結論や出力に至った理由の要約。"
+            "結論を支える主要な根拠を簡潔にまとめる。"
         ),
     )
 
-    log_message: str = Field(
-        default="",
+    thought_process: list[str] = Field(
+        default_factory=list,
         description=(
-            "ログ出力用の短いメッセージ。"
-            "アプリケーションログやデバッグ表示で利用することを想定する。"
+            "結論に至るまでの思考過程。"
+            "観察した事実、解釈、判断の流れを順番に記載する。"
         ),
     )
