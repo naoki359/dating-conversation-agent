@@ -98,3 +98,7 @@ class AgentState(TypedDict):
     is_finished: NotRequired[bool]
     # 例:
     # True（1ループで終了）
+
+    # ===== Logs =====
+
+    trace_id: str
