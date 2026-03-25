@@ -49,6 +49,8 @@ class BaseNode(ABC):
                 execution_ms=execution_ms,
             )
 
+            self.console_render(result)
+
             return updated_state
 
         except Exception as e:
@@ -81,6 +83,9 @@ class BaseNode(ABC):
     @abstractmethod
     def execute(self, state: AgentState) -> BaseOutputSchema:
         raise NotImplementedError
+
+    def console_render(self, result: BaseOutputSchema) -> None:
+        pass
 
     def _log(
         self,

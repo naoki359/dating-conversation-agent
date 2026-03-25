@@ -8,6 +8,7 @@ from app.agent.core.nodes.decision.output_schema import DecisionOutputSchema
 from app.agent.core.schemas.state import AgentState
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
+from app.agent.core.config.settings import Settings
 
 
 class DecisionNode(BaseNode):
@@ -105,3 +106,21 @@ class DecisionNode(BaseNode):
         indent = " " * spaces
         lines = text.splitlines() or [text]
         return "\n".join(f"{indent}{line}" for line in lines)
+    
+    def console_render(self, result: DecisionOutputSchema) -> None:
+        if not Settings.AGENT_LOCAL_MODE:
+            return
+
+        print("")
+        print("相手の返答をもとに、次の進め方を整理しています...")
+        print("")
+
+        if result.thought_process:
+            print("考えたこと:")
+            for i, step in enumerate(result.thought_process, start=1):
+                print(f"  {i}. {step}")
+            print("")
+
+        print("結論:")
+        print(f"  {result.summary}")
+        print("")
