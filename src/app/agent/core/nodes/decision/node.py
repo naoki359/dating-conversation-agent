@@ -4,7 +4,7 @@ from pathlib import Path
 from textwrap import dedent
 
 from app.agent.core.nodes.base_node import BaseNode
-from app.agent.core.nodes.decision.output_schema import DecisionOutputSchema
+from app.agent.core.nodes.decision.schema import DecisionOutputSchema
 from app.agent.core.schemas.state import AgentState
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
