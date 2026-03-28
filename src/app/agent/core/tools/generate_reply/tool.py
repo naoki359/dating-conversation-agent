@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
-from app.agent.core.schemas.state import AgentState
+from app.agent.core.schemas.state import ReactState
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.tools.base_tool import BaseTool
 from app.agent.core.tools.generate_reply.schema import GenerateReplyResultSchema
@@ -16,7 +16,7 @@ class GenerateReplyTool(BaseTool):
         self.llm = get_chat_model_gpt5_4()
         self.prompt = load_prompt_from_yaml(self._get_prompt_path())
 
-    def execute(self, state: AgentState) -> BaseToolResult:
+    def execute(self, state: ReactState) -> BaseToolResult:
         profile = state.get("profile", {})
         conversation = state.get("conversation", [])
         current_thought = state.get("current_thought", "")

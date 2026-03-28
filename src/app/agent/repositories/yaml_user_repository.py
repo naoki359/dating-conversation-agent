@@ -5,12 +5,12 @@ from typing import Any
 
 import yaml
 
-from app.agent.core.schemas.state import AgentState
+from app.agent.core.schemas.state import ReactState
 
 
-def load_agent_state(user_id: str) -> AgentState:
+def load_agent_state(user_id: str) -> ReactState:
     """
-    user_id を受け取り、data/test_user/{user_id}.yaml を読み込んで AgentState を返す。
+    user_id を受け取り、data/test_user/{user_id}.yaml を読み込んで ReactState を返す。
 
     例:
         user_id='with_0001'
@@ -45,9 +45,9 @@ def _load_yaml(file_path: Path) -> dict[str, Any]:
     return data
 
 
-def _build_initial_state(data: dict[str, Any]) -> AgentState:
+def _build_initial_state(data: dict[str, Any]) -> ReactState:
     """
-    YAML から読み込んだ dict を AgentState に正規化する。
+    YAML から読み込んだ dict を ReactState に正規化する。
     ReAct 実行前の初期値もここで設定する。
     """
     profile_raw = data.get("profile", {})
@@ -81,7 +81,7 @@ def _build_initial_state(data: dict[str, Any]) -> AgentState:
             }
         )
 
-    state: AgentState = {
+    state: ReactState = {
         # ===== 元データ =====
         "user_id": data.get("user_id", ""),
         "profile": {

@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 from textwrap import dedent
+from typing import override
 
 from app.agent.core.nodes.base_node import BaseNode
 from app.agent.core.nodes.decision.schema import DecisionOutputSchema
-from app.agent.core.schemas.state import AgentState
+from app.agent.core.schemas.base_output_schema import BaseOutputSchema
+from app.agent.core.schemas.state import ReactState, ReactState
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.config.settings import Settings
@@ -18,7 +20,7 @@ class DecisionNode(BaseNode):
         self.llm = get_chat_model_gpt5_4()
         self.prompt = load_prompt_from_yaml(self._get_prompt_path())
 
-    def execute(self, state: AgentState) -> DecisionOutputSchema:
+    def execute(self, state: ReactState) -> DecisionOutputSchema:
         profile_text = self._build_profile_text(state)
         conversation_text = self._build_conversation_text(state)
 
@@ -35,11 +37,25 @@ class DecisionNode(BaseNode):
 
         result.node_name = self.node_name
         return result
+    
+    @override
+    def react_update(self, node_result: BaseOutputSchema, state: ReactState) -> ReactState:
+        assert isinstance(node_result, DecisionOutputSchema)
+
+        updated_state = {
+            **state,
+            "current_thought": node_result.current_thought,
+            "required_tasks": node_result.required_tasks,
+            "decided_action": node_result.decided_action,
+            "action_reasoning": node_result.reasoning,
+        }
+
+        return updated_state
 
     def _get_prompt_path(self) -> Path:
         return Path(__file__).resolve().parent / "prompt.yaml"
 
-    def _build_profile_text(self, state: AgentState) -> str:
+    def _build_profile_text(self, state: ReactState) -> str:
         profile = state.get("profile", {})
 
         name = profile.get("name", "")
@@ -61,7 +77,7 @@ class DecisionNode(BaseNode):
             """
         ).strip()
 
-    def _build_conversation_text(self, state: AgentState) -> str:
+    def _build_conversation_text(self, state: ReactState) -> str:
         conversation = state.get("conversation", {})
         messages = conversation.get("messages", [])
 

@@ -37,7 +37,7 @@ def generate_reply(request: ReplyRequest):
     # 仮：固定IDで読み込み
     state = load_agent_state(request.id)
 
-    # print("Loaded AgentState:", state)
+    # print("Loaded ReactState:", state)
 
     result = graph.invoke(state, config={"recursion_limit": 100})
 

@@ -1,104 +1,95 @@
-from typing import Literal, NotRequired, TypedDict
+from typing import Any, Literal, TypedDict
 
 
-# ===== Message =====
+# ============================================
+# Message: 1発言単位
+# ============================================
 class Message(TypedDict):
-    id: str  # 例: "m001"
-    timestamp: str  # 例: "2026-03-21T19:00:00+09:00"
-    sender: Literal["self", "other"]  # 自分 or 相手
-    message: str  # 実際の発言内容
+    id: str
+    timestamp: str
+    sender: Literal["self", "other"]
+    message: str
 
 
-# ===== Profile =====
+# ============================================
+# Profile: 相手プロフィール
+# ============================================
 class Profile(TypedDict):
-    name: str  # 例: "さやか"
-    age: int  # 例: 28
-
+    name: str
+    age: int
     raw_profile_text: str
-    # 例:
-    # "はじめまして☺️\nプロフィール見ていただきありがとうございます！..."
-
     profile_summary: str
-    # 例:
-    # "映画好き（特に韓国映画・サスペンス）。カフェ巡り。落ち着いた性格。"
 
 
-# ===== Conversation =====
+# ============================================
+# Conversation: 会話履歴
+# ============================================
 class Conversation(TypedDict):
     messages: list[Message]
-
     updated_at: str
-    # 例: "2026-03-21T19:10:00+09:00"
 
 
-# ===== AgentState =====
-class AgentState(TypedDict):
-    # ===== 元データ（YAMLから読み込む情報） =====
+# ============================================
+# SourceData: 読み取り専用データ
+# ============================================
+class SourceData(TypedDict, total=False):
+    """
+    外部から与えられる入力データ。
+    Nodeは絶対に更新しない（重要）。
+    """
 
-    user_id: NotRequired[str]
-    # 例: "with_0001"
-
-    profile: NotRequired[Profile]
-    # YAMLの profile をそのまま格納
-
-    conversation: NotRequired[Conversation]
-    # YAMLの conversation をそのまま格納
-
-
-    # ===== ReAct: Thought =====
-
-    current_thought: NotRequired[str]
-    # 例:
-    # "相手は韓国映画・サスペンスが好きと明言している。
-    # 会話はまだ初期段階なので、興味に寄せて話題を広げるのが良い。"
+    user_id: str
+    profile: Profile
+    conversation: Conversation
 
 
-    # ===== ReAct: Task Discovery =====
+# ============================================
+# ReactState: ReActの作業状態
+# ============================================
+class ReactState(TypedDict, total=False):
+    """
+    LangGraphでノード間を流れる状態。
 
-    required_tasks: NotRequired[list[str]]
-    # 例:
-    # [
-    #   "相手の興味を整理する",
-    #   "次の返信方針を決める",
-    #   "会話を広げる返信を生成する"
-    # ]
-    #
-    # 現在の状況に対して必要だと考えられるタスク一覧。
-    # 今すぐ実行しない候補も含めて広めに保持する。
+    役割:
+    - 思考（Thought）
+    - タスク洗い出し（Task Discovery）
+    - 意思決定（Decision）
+    - 行動結果（Action）
 
+    ※ 成果物（返信など）は持たない
+    """
 
-    # ===== ReAct: Decision =====
+    # ===== Thought =====
+    current_thought: str
 
-    decided_action: NotRequired[str]
-    # 例:
-    # "会話を広げる返信を生成する"
-    #
-    # required_tasks の中から、今回このステップで実際に選んだタスク。
+    # ===== Task Discovery =====
+    required_tasks: list[str]
 
-    action_reasoning: NotRequired[str]
-    # 例:
-    # "相手の興味に寄せた質問を返すことで、
-    # 会話を継続しやすくなるため。"
+    # ===== Decision =====
+    decided_action: str
+    action_reasoning: str
 
+    # ===== Action =====
+    selected_tool: str
+    tool_result: dict[str, Any]
 
-    # ===== Action結果 =====
+    # ===== Control =====
+    is_finished: bool
 
-    generated_reply: NotRequired[str]
-    # 例:
-    # "韓国映画いいですね！最近観た中で特に面白かった作品ってありますか？"
-
-    reply_reasoning: NotRequired[str]
-    # 例:
-    # "相手の興味（韓国映画・サスペンス）に寄せ、
-    # 具体的な作品名を引き出す質問で会話を広げる構成にした。"
-
-
-    # ===== 制御 =====
-
-    is_finished: NotRequired[bool]
-    # 例:
-    # True（1ループで終了）
-
-    # ===== Logs =====
-
+    # ===== Trace =====
     trace_id: str
+
+
+# ============================================
+# CanvasData: 成果物
+# ============================================
+class CanvasData(TypedDict, total=False):
+    """
+    最終的にユーザーに見せる成果物。
+    1ループの最後にのみ更新される。
+
+    ReactStateと重複させない（重要）。
+    """
+
+    generated_reply: str
+    reply_reasoning: str

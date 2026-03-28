@@ -25,7 +25,6 @@ class JsonLogger:
         state_before: dict[str, Any],
         output: dict[str, Any],
         state_after: dict[str, Any],
-        execution_ms: int | None = None,
         error_type: str | None = None,
         error_message: str | None = None,
     ) -> None:
@@ -59,7 +58,6 @@ class JsonLogger:
                 "user_id": user_id,
                 "trace_id": trace_id,
                 "node_name": node_name,
-                "execution_ms": execution_ms,
                 "success": output.get("success"),
             },
             "input": {

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import time
 
-from app.agent.core.schemas.state import AgentState
+from app.agent.core.schemas.state import ReactState, ReactState
 from app.agent.core.schemas.base_output_schema import BaseOutputSchema
 from app.agent.core.utils.json_logger import json_logger
 
@@ -9,52 +9,44 @@ from app.agent.core.utils.json_logger import json_logger
 class BaseNode(ABC):
     node_name = "base_node"
 
-    def run(self, state: AgentState) -> AgentState:
-        working_state = dict(state)
+    def run(self, state: ReactState) -> ReactState:
+        # trace_idがなければ生成しておく
+        if "trace_id" not in state:
+            state["trace_id"] = json_logger.generate_trace_id()
 
-        if "trace_id" not in working_state:
-            working_state["trace_id"] = json_logger.generate_trace_id()
-
-        start = time.perf_counter()
+        # StateのDeepコピーを作成しておく（ログ用）
+        state_before = state.copy()
 
         try:
-            result = self.execute(working_state)
+            # ノードを実行
+            result = self.execute(state)
 
+            # ノードの実行結果が想定通りの型かチェックを行う
             if not isinstance(result, BaseOutputSchema):
                 raise TypeError(
                     f"{self.node_name}.execute() must return BaseOutputSchema, "
                     f"got {type(result).__name__}"
                 )
+            
+            # Stateの更新を行う
+            state_after = self.react_update(node_result=result, state=state)
 
-            output_dict = result.model_dump(
-                exclude={"node_name", "log_message"},
-                exclude_none=True,
-            )
-
-            updated_state = {
-                **working_state,
-                **{
-                    key: value
-                    for key, value in output_dict.items()
-                    if key not in {"success"}
-                },
-            }
-
-            execution_ms = int((time.perf_counter() - start) * 1000)
-
-            self._log(
-                state_before=working_state,
-                result=output_dict,
-                state_after=updated_state,
-                execution_ms=execution_ms,
-            )
-
+            # Canvasの更新を行う
+            self.canvas_update(result)
+            
+            # ログの出力を行う（UI用）
             self.console_render(result)
 
-            return updated_state
+            # ログの出力を行う（永続化用）
+            self._log(
+                state_before=state_before,
+                result=dict(result),
+                state_after=state_after
+            )
+
+            return state_after
 
         except Exception as e:
-            execution_ms = int((time.perf_counter() - start) * 1000)
 
             error_result = {
                 "node_name": self.node_name,
@@ -65,15 +57,14 @@ class BaseNode(ABC):
             }
 
             error_state = {
-                **working_state,
+                **state,
                 "is_finished": True,
             }
 
             self._log(
-                state_before=working_state,
-                result=error_result,
+                state_before=state_before,
+                result=dict(error_result),
                 state_after=error_state,
-                execution_ms=execution_ms,
                 error_type=type(e).__name__,
                 error_message=str(e),
             )
@@ -81,18 +72,23 @@ class BaseNode(ABC):
             raise
 
     @abstractmethod
-    def execute(self, state: AgentState) -> BaseOutputSchema:
+    def execute(self, state: ReactState) -> BaseOutputSchema:
         raise NotImplementedError
+    
+    def react_update(self, node_result: BaseOutputSchema, state: ReactState) -> ReactState:
+        return state
+
+    def canvas_update(self, node_result: BaseOutputSchema) -> None:
+        pass
 
     def console_render(self, result: BaseOutputSchema) -> None:
         pass
 
     def _log(
         self,
-        state_before: AgentState,
+        state_before: ReactState,
         result: dict,
-        state_after: AgentState,
-        execution_ms: int,
+        state_after: ReactState,
         error_type: str | None = None,
         error_message: str | None = None,
     ) -> None:
@@ -106,7 +102,6 @@ class BaseNode(ABC):
             state_before=state_before,
             output=result,
             state_after=state_after,
-            execution_ms=execution_ms,
             error_type=error_type,
             error_message=error_message,
         )
