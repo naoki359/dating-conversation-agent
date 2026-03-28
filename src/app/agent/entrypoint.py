@@ -45,6 +45,13 @@ def generate_reply(request: ReplyRequest):
 
     result = graph.invoke({"user_id": request.id}, config={"recursion_limit": 100})
 
+    # テスト用：最終的なstateの情報を出力
+    print("Final State:", result["history"])
+
+    print("")
+    # shared_storeの内容を確認
+    print("Shared Store:", shared_store)
+
     return ReplyResponse(
         generated_reply="",
         reply_reasoning=result.get("action_reasoning"),

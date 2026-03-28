@@ -35,19 +35,13 @@ class ActionNode(BaseNode):
 
         # ツールを実行
         tool_result = tool_method()
-        data = tool_result.data
 
         return BaseOutputSchema(
             node_name=self.node_name,
             success=tool_result.success,
             summary=f"{selected_tool.name} を実行しました。",
             reasoning="Decisionに基づきツールを選択。",
-            thought_process=[
-                "action確認",
-                "tool選択",
-                "実行",
-                "結果整理",
-            ]
+            thought_process=[]
         )
 
     def console_render(self, result: BaseOutputSchema):

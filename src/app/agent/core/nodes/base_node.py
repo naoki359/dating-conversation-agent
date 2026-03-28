@@ -77,6 +77,16 @@ class BaseNode(ABC):
         raise NotImplementedError
     
     def react_update(self, node_result: BaseOutputSchema, state: ReactState) -> ReactState:
+        # 履歴の更新（共通）
+        if "history" not in state:
+            state["history"] = []
+        state["history"].append({field: getattr(node_result, field) for field in BaseOutputSchema.model_fields.keys()})
+        
+        # 子供固有のState更新
+        return self.update_state(node_result, state)
+    
+    def update_state(self, node_result: BaseOutputSchema, state: ReactState) -> ReactState:
+        """子供クラスでオーバーライドして、ノード固有のState更新を行う"""
         return state
 
     def canvas_update(self, node_result: BaseOutputSchema) -> None:

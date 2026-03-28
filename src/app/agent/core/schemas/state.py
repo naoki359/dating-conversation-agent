@@ -1,5 +1,7 @@
 from typing import Any, Literal, TypedDict
 
+from app.agent.core.schemas.base_output_schema import BaseOutputSchema
+
 # ============================================
 # ReactState: ReActの作業状態
 # ============================================
@@ -35,6 +37,9 @@ class ReactState(TypedDict, total=False):
 
     # ===== Trace =====
     trace_id: str
+
+    # ===== History =====
+    history: list[BaseOutputSchema]  # ReActの検討履歴（各ノードの出力）
 
 
 # ============================================

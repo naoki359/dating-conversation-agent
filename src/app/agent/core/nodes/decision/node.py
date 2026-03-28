@@ -43,7 +43,7 @@ class DecisionNode(BaseNode):
         return result
     
     @override
-    def react_update(self, node_result: BaseOutputSchema, state: ReactState) -> ReactState:
+    def update_state(self, node_result: BaseOutputSchema, state: ReactState) -> ReactState:
         assert isinstance(node_result, DecisionOutputSchema)
 
         updated_state = {
