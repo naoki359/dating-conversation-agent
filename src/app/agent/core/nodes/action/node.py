@@ -1,8 +1,7 @@
 from app.agent.core.nodes.base_node import BaseNode
 from app.agent.core.schemas.base_output_schema import BaseOutputSchema
 from app.agent.core.schemas.state import ReactState
-from app.agent.core.tools.registry import ToolRegistry
-from app.agent.core.tools.selector import ToolSelector
+from app.agent.core.nodes.action.tool_enum import ToolEnum
 
 
 class ActionNode(BaseNode):
@@ -17,25 +16,33 @@ class ActionNode(BaseNode):
 
     node_name = "action_node"
 
-    def __init__(self, tool_selector: ToolSelector, tool_registry: ToolRegistry):
-        self.tool_selector = tool_selector
-        self.tool_registry = tool_registry
-
     def execute(self, state: ReactState) -> BaseOutputSchema:
         decided_action = state.get("decided_action", "")
 
-        # ===== ツール選択 =====
-        selected_tool_name = self.tool_selector.select(decided_action)
-        tool = self.tool_registry.get(selected_tool_name)
+        # ToolEnumからツールを選択
+        try:
+            selected_tool = ToolEnum[decided_action.upper().replace(" ", "_")]
+            tool_method = selected_tool.method
+        except KeyError:
+            # ツールが見つからない場合のエラーハンドリング
+            return BaseOutputSchema(
+                node_name=self.node_name,
+                success=False,
+                summary=f"指定されたツール '{decided_action}' が見つかりません。",
+                reasoning="decided_actionが無効です。",
+                thought_process=["ツール選択", "ツールが見つからない"],
+                react_updates={"is_finished": True},
+                canvas_updates={},
+            )
 
-        # ===== 実行 =====
-        tool_result = tool.execute(state)
+        # ツールを実行
+        tool_result = tool_method(state)
         data = tool_result.data
 
         return BaseOutputSchema(
             node_name=self.node_name,
             success=tool_result.success,
-            summary=f"{selected_tool_name} を実行しました。",
+            summary=f"{selected_tool.name} を実行しました。",
             reasoning="Decisionに基づきツールを選択。",
             thought_process=[
                 "action確認",
@@ -44,7 +51,7 @@ class ActionNode(BaseNode):
                 "結果整理",
             ],
             react_updates={
-                "selected_tool": selected_tool_name,
+                "selected_tool": selected_tool.name,
                 "tool_result": {
                     "tool_name": tool_result.tool_name,
                     "summary": tool_result.summary,

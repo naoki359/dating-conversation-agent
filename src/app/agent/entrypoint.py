@@ -35,11 +35,11 @@ def generate_reply(request: ReplyRequest):
     graph = get_graph()
 
     # 仮：固定IDで読み込み
-    state = load_agent_state(request.id)
+    # state = load_agent_state(request.id)
 
-    # print("Loaded ReactState:", state)
+    # print("Loaded AgentState:", state)
 
-    result = graph.invoke(state, config={"recursion_limit": 100})
+    result = graph.invoke({"user_id": request.id}, config={"recursion_limit": 100})
 
     return ReplyResponse(
         generated_reply="",

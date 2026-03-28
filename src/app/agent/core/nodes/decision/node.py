@@ -7,10 +7,12 @@ from typing import override
 from app.agent.core.nodes.base_node import BaseNode
 from app.agent.core.nodes.decision.schema import DecisionOutputSchema
 from app.agent.core.schemas.base_output_schema import BaseOutputSchema
-from app.agent.core.schemas.state import ReactState, ReactState
+from app.agent.core.schemas.state import ReactState
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.config.settings import Settings
+from app.agent.core.nodes.action.tool_enum import ToolEnum
+from app.agent.core.utils.shared_store import shared_store
 
 
 class DecisionNode(BaseNode):
@@ -21,14 +23,16 @@ class DecisionNode(BaseNode):
         self.prompt = load_prompt_from_yaml(self._get_prompt_path())
 
     def execute(self, state: ReactState) -> DecisionOutputSchema:
-        profile_text = self._build_profile_text(state)
-        conversation_text = self._build_conversation_text(state)
+        profile_text = self._build_profile_text()
+        conversation_text = self._build_conversation_text()
+        tools_info = self._build_tools_info()
 
         prompt_value = self.prompt.invoke(
             {
                 "node_name": self.node_name,
                 "profile_text": profile_text,
                 "conversation_text": conversation_text,
+                "tools_info": tools_info,
             }
         )
 
@@ -55,8 +59,8 @@ class DecisionNode(BaseNode):
     def _get_prompt_path(self) -> Path:
         return Path(__file__).resolve().parent / "prompt.yaml"
 
-    def _build_profile_text(self, state: ReactState) -> str:
-        profile = state.get("profile", {})
+    def _build_profile_text(self) -> str:
+        profile = shared_store.get("profile", {})
 
         name = profile.get("name", "")
         age = profile.get("age", "")
@@ -77,8 +81,8 @@ class DecisionNode(BaseNode):
             """
         ).strip()
 
-    def _build_conversation_text(self, state: ReactState) -> str:
-        conversation = state.get("conversation", {})
+    def _build_conversation_text(self) -> str:
+        conversation = shared_store.get("conversation", {})
         messages = conversation.get("messages", [])
 
         if not messages:
@@ -123,6 +127,14 @@ class DecisionNode(BaseNode):
         lines = text.splitlines() or [text]
         return "\n".join(f"{indent}{line}" for line in lines)
     
+    def _build_tools_info(self) -> str:
+        """利用可能なツールの情報を構築する"""
+        lines = []
+        for tool in ToolEnum:
+            params_str = ", ".join(f"{k}: {v}" for k, v in tool.params.items())
+            lines.append(f"- {tool.name}: {tool.description} (パラメータ: {params_str})")
+        return "\n".join(lines)
+    
     def console_render(self, result: DecisionOutputSchema) -> None:
         if not Settings.AGENT_LOCAL_MODE:
             return
@@ -140,3 +152,6 @@ class DecisionNode(BaseNode):
         print("結論:")
         print(f"  {result.summary}")
         print("")
+
+        print("次にやること:")
+        print(f"  {result.decided_action}")
