@@ -31,12 +31,10 @@ class ActionNode(BaseNode):
                 summary=f"指定されたツール '{decided_action}' が見つかりません。",
                 reasoning="decided_actionが無効です。",
                 thought_process=["ツール選択", "ツールが見つからない"],
-                react_updates={"is_finished": True},
-                canvas_updates={},
             )
 
         # ツールを実行
-        tool_result = tool_method(state)
+        tool_result = tool_method()
         data = tool_result.data
 
         return BaseOutputSchema(
@@ -49,25 +47,9 @@ class ActionNode(BaseNode):
                 "tool選択",
                 "実行",
                 "結果整理",
-            ],
-            react_updates={
-                "selected_tool": selected_tool.name,
-                "tool_result": {
-                    "tool_name": tool_result.tool_name,
-                    "summary": tool_result.summary,
-                    "data": data,
-                },
-                "is_finished": True,
-            },
-            canvas_updates={
-                "generated_reply": data.get("reply_text"),
-                "reply_reasoning": data.get("reasoning"),
-            },
+            ]
         )
 
     def console_render(self, result: BaseOutputSchema):
         print("\n=== ActionNode ===")
         print(result.summary)
-
-        if result.canvas_updates.get("generated_reply"):
-            print("Reply:", result.canvas_updates["generated_reply"])

@@ -1,11 +1,9 @@
 from typing import Any, Dict, List
 
-from pydantic import Field
-
-from app.agent.core.schemas.base_tool_schema import BaseToolResult
+from pydantic import BaseModel, Field
 
 
-class GetHistoryResultSchema(BaseToolResult):
+class GetHistoryResultSchema(BaseModel):
     partner_profile: Dict[str, Any] = Field(
         default_factory=dict,
         description="相手のプロフィール情報。",

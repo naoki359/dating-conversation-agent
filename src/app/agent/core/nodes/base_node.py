@@ -3,6 +3,7 @@ import time
 
 from app.agent.core.schemas.state import ReactState, ReactState
 from app.agent.core.schemas.base_output_schema import BaseOutputSchema
+from app.agent.core.utils.shared_store import shared_store
 from app.agent.core.utils.json_logger import json_logger
 
 
@@ -92,7 +93,7 @@ class BaseNode(ABC):
         error_type: str | None = None,
         error_message: str | None = None,
     ) -> None:
-        user_id = state_before.get("user_id", "unknown_user")
+        user_id = shared_store.get("user_id")
         trace_id = state_before["trace_id"]
 
         json_logger.save(

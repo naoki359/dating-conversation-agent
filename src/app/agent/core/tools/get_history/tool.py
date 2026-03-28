@@ -10,7 +10,8 @@ class GetHistoryTool():
     name = "get_history"
     description = "相手のプロフィールと会話履歴を取得する"
 
-    def execute(self, user_id: str) -> BaseToolResult:
+    def execute(self) -> BaseToolResult:
+        user_id = shared_store.get("user_id")
         if not user_id:
             return BaseToolResult(
                 tool_name=self.name,
@@ -39,7 +40,7 @@ class GetHistoryTool():
 
             result = GetHistoryResultSchema(
                 partner_profile=shared_store["profile"],
-                conversation_history=shared_store["conversation"],
+                conversation_history=shared_store["conversation"]["messages"],
             )
 
         return BaseToolResult(

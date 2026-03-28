@@ -1,5 +1,6 @@
 from langgraph.graph import END, StateGraph
 
+from app.agent.core.nodes.action.node import ActionNode
 from app.agent.core.nodes.decision.node import DecisionNode
 from app.agent.core.schemas.state import ReactState
 
@@ -8,10 +9,13 @@ def build_graph():
     workflow = StateGraph(ReactState)
 
     decision_node = DecisionNode()
+    action_node = ActionNode()
 
     workflow.add_node("decision", decision_node.run)
+    workflow.add_node("action", action_node.run)
 
     workflow.set_entry_point("decision")
-    workflow.add_edge("decision", END)
+    workflow.add_edge("decision", "action")
+    workflow.add_edge("action", END)
 
     return workflow.compile()

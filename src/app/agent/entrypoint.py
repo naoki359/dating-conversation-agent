@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from app.agent.core.graph.build_graph import build_graph
 from app.agent.repositories.yaml_user_repository import load_agent_state
+from app.agent.core.utils.shared_store import shared_store
 
 app = FastAPI(title="Dating Conversation Agent")
 
@@ -32,6 +33,9 @@ def health_check():
 
 @app.post("/reply", response_model=ReplyResponse)
 def generate_reply(request: ReplyRequest):
+    # shared_storeにuser_idを設定
+    shared_store["user_id"] = request.id
+
     graph = get_graph()
 
     # 仮：固定IDで読み込み
