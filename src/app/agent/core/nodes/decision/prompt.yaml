@@ -49,3 +49,6 @@ messages:
 
       [会話履歴]
       {conversation_text}
+
+      [これまでの思考過程]
+      {past_thought_process_text}

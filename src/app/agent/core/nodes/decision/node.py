@@ -25,6 +25,7 @@ class DecisionNode(BaseNode):
     def execute(self, state: ReactState) -> DecisionOutputSchema:
         profile_text = self._build_profile_text()
         conversation_text = self._build_conversation_text()
+        past_thought_process_text = self._build_past_thought_process_text(state)
         tools_info = self._build_tools_info()
 
         prompt_value = self.prompt.invoke(
@@ -32,9 +33,12 @@ class DecisionNode(BaseNode):
                 "node_name": self.node_name,
                 "profile_text": profile_text,
                 "conversation_text": conversation_text,
+                "past_thought_process_text": past_thought_process_text,
                 "tools_info": tools_info,
             }
         )
+
+        # self._debug_render_prompt(prompt_value, title=self.node_name)
 
         structured_llm = self.llm.with_structured_output(DecisionOutputSchema)
         result = structured_llm.invoke(prompt_value)
@@ -121,6 +125,41 @@ class DecisionNode(BaseNode):
             """
         ).strip()
 
+    def _build_past_thought_process_text(self, state: ReactState) -> str:
+        history = state.get("history", [])
+        if not history:
+            return "過去の思考過程はありません。"
+
+        blocks: list[str] = []
+        for idx, item in enumerate(history, start=1):
+            if isinstance(item, BaseOutputSchema):
+                node_name = item.node_name
+                thought_process = item.thought_process
+            elif isinstance(item, dict):
+                node_name = str(item.get("node_name", "unknown_node"))
+                raw_thought_process = item.get("thought_process", [])
+                thought_process = [str(step) for step in raw_thought_process if step is not None]
+            else:
+                continue
+
+            if not thought_process:
+                continue
+
+            lines = "\n".join(f"  - {step}" for step in thought_process)
+            blocks.append(
+                dedent(
+                    f"""
+                    [{idx}] node: {node_name}
+                    {lines}
+                    """
+                ).strip()
+            )
+
+        if not blocks:
+            return "過去の思考過程はありません。"
+
+        return "\n\n".join(blocks)
+
     @staticmethod
     def _indent_block(text: str, spaces: int) -> str:
         indent = " " * spaces
@@ -134,11 +173,12 @@ class DecisionNode(BaseNode):
             params_str = ", ".join(f"{k}: {v}" for k, v in tool.params.items())
             lines.append(f"- {tool.name}: {tool.description} (パラメータ: {params_str})")
         return "\n".join(lines)
-    
+
     def console_render(self, result: DecisionOutputSchema) -> None:
         if not Settings.AGENT_LOCAL_MODE:
             return
-
+        
+        print("\n=== DecisionNode ===")
         print("")
         print("相手の返答をもとに、次の進め方を整理しています...")
         print("")

@@ -44,6 +44,14 @@ class ActionNode(BaseNode):
             thought_process=[]
         )
 
+    def update_state(self, node_result: BaseOutputSchema, state: ReactState) -> ReactState:
+        action_loop_count = state.get("action_loop_count", 0) + 1
+
+        return {
+            **state,
+            "action_loop_count": action_loop_count,
+        }
+
     def console_render(self, result: BaseOutputSchema):
         print("\n=== ActionNode ===")
         print(result.summary)

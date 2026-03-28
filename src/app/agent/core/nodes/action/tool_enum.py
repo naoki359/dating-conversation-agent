@@ -1,6 +1,7 @@
 from enum import Enum
 
 from app.agent.core.tools.get_history.tool import GetHistoryTool
+from app.agent.core.tools.generate_reply.tool import GenerateReplyTool
 
 
 class ToolEnum(Enum):
@@ -15,8 +16,13 @@ class ToolEnum(Enum):
         {"user_id": "str - ユーザーのID"}
     )
 
+    GENERATE_REPLY = (
+        GenerateReplyTool().execute,
+        "相手のプロフィールと会話履歴を参考に、自然な返信を生成する",
+        {}
+    )
+
     # 仮定: CHECK_REPLY = (CheckReplyTool().execute, "返信をチェックする", {"reply_text": "str - チェックする返信テキスト"})
-    # 仮定: GENERATE_REPLY = (GenerateReplyTool().execute, "返信を生成する", {"context": "dict - 生成に必要なコンテキスト"})
 
     def __init__(self, method, description, params):
         self.method = method

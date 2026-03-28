@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import time
 
+from app.agent.core.config.settings import Settings
 from app.agent.core.schemas.state import ReactState, ReactState
 from app.agent.core.schemas.base_output_schema import BaseOutputSchema
 from app.agent.core.utils.shared_store import shared_store
@@ -94,6 +95,25 @@ class BaseNode(ABC):
 
     def console_render(self, result: BaseOutputSchema) -> None:
         pass
+
+    def _debug_render_prompt(self, prompt_value: object, title: str | None = None) -> None:
+        if not Settings.AGENT_LOCAL_MODE:
+            return
+
+        if not hasattr(prompt_value, "to_messages"):
+            return
+
+        header = title or self.node_name
+
+        print("")
+        print(f"[{header}] LLMに送信する最終プロンプト")
+        print("=" * 80)
+        for message in prompt_value.to_messages():
+            role = getattr(message, "type", "unknown")
+            content = getattr(message, "content", "")
+            print(f"[{role}]")
+            print(content)
+            print("-" * 80)
 
     def _log(
         self,

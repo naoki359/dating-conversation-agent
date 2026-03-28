@@ -5,6 +5,29 @@ from app.agent.core.nodes.decision.node import DecisionNode
 from app.agent.core.schemas.state import ReactState
 
 
+def _route_after_action(state: ReactState) -> str:
+    action_loop_count = state.get("action_loop_count", 0)
+    if action_loop_count >= 2:
+        return END
+    return "decision"
+
+
+# def build_graph():
+#     workflow = StateGraph(ReactState)
+
+#     decision_node = DecisionNode()
+#     action_node = ActionNode()
+
+#     workflow.add_node("decision", decision_node.run)
+#     workflow.add_node("action", action_node.run)
+
+#     workflow.set_entry_point("decision")
+#     workflow.add_edge("decision", "action")
+#     workflow.add_edge("action", END)
+
+#     return workflow.compile()
+
+
 def build_graph():
     workflow = StateGraph(ReactState)
 
@@ -16,6 +39,13 @@ def build_graph():
 
     workflow.set_entry_point("decision")
     workflow.add_edge("decision", "action")
-    workflow.add_edge("action", END)
+    workflow.add_conditional_edges(
+        "action",
+        _route_after_action,
+        {
+            "decision": "decision",
+            END: END,
+        },
+    )
 
     return workflow.compile()
