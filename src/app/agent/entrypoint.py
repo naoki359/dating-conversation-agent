@@ -33,6 +33,7 @@ def health_check():
 
 @app.post("/reply", response_model=ReplyResponse)
 def generate_reply(request: ReplyRequest):
+    print(f"{request.id}への返信を生成します")
     # shared_storeにuser_idを設定
     shared_store["user_id"] = request.id
 

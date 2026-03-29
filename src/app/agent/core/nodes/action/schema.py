@@ -11,19 +11,9 @@ class ActionOutputSchema(BaseOutputSchema):
         description="今回の Action ノードで実行したツール名。",
     )
 
-    tool_result: dict[str, Any] = Field(
+    tool_result: Any = Field(
         default_factory=dict,
-        description="実行したツールの結果。tools/xxx/schema.py の内容を dict で保持する。",
-    )
-
-    generated_reply: str | None = Field(
-        default=None,
-        description="生成された返信文。返信生成系ツールでない場合は None。",
-    )
-
-    reply_reasoning: str | None = Field(
-        default=None,
-        description="返信文生成理由。返信生成系ツールでない場合は None。",
+        description="実行したツールの結果",
     )
 
     is_finished: bool = Field(

@@ -38,7 +38,7 @@ class DecisionNode(BaseNode):
             }
         )
 
-        # self._debug_render_prompt(prompt_value, title=self.node_name)
+        self._debug_render_prompt(prompt_value, title=self.node_name)
 
         structured_llm = self.llm.with_structured_output(DecisionOutputSchema)
         result = structured_llm.invoke(prompt_value)
@@ -134,23 +134,21 @@ class DecisionNode(BaseNode):
         for idx, item in enumerate(history, start=1):
             if isinstance(item, BaseOutputSchema):
                 node_name = item.node_name
-                thought_process = item.thought_process
+                summary = item.summary
             elif isinstance(item, dict):
                 node_name = str(item.get("node_name", "unknown_node"))
-                raw_thought_process = item.get("thought_process", [])
-                thought_process = [str(step) for step in raw_thought_process if step is not None]
+                summary = str(item.get("summary", ""))
             else:
                 continue
 
-            if not thought_process:
+            if not summary:
                 continue
 
-            lines = "\n".join(f"  - {step}" for step in thought_process)
             blocks.append(
                 dedent(
                     f"""
                     [{idx}] node: {node_name}
-                    {lines}
+                      - {summary}
                     """
                 ).strip()
             )
@@ -170,8 +168,9 @@ class DecisionNode(BaseNode):
         """利用可能なツールの情報を構築する"""
         lines = []
         for tool in ToolEnum:
-            params_str = ", ".join(f"{k}: {v}" for k, v in tool.params.items())
-            lines.append(f"- {tool.name}: {tool.description} (パラメータ: {params_str})")
+            lines.append(
+                f"- {tool.name}: {tool.description} (完了後状態: {tool.completion_state})"
+            )
         return "\n".join(lines)
 
     def console_render(self, result: DecisionOutputSchema) -> None:

@@ -16,4 +16,4 @@ wheels/
 .vscode/
 
 # Logs
-outputs/
+logs/

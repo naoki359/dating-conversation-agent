@@ -7,7 +7,7 @@ from app.agent.core.schemas.state import ReactState
 
 def _route_after_action(state: ReactState) -> str:
     action_loop_count = state.get("action_loop_count", 0)
-    if action_loop_count >= 2:
+    if action_loop_count >= 4:
         return END
     return "decision"
 
