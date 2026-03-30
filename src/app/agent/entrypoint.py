@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from app.agent.core.graph.build_graph import build_graph
 from app.agent.repositories.yaml_user_repository import load_agent_state
-from app.agent.core.utils.shared_store import shared_store
+from app.agent.core.utils.shared_store import shared_store, shared_canvas
 
 app = FastAPI(title="Dating Conversation Agent")
 
@@ -52,6 +52,6 @@ def generate_reply(request: ReplyRequest):
     # print("Shared Store:", shared_store)
 
     return ReplyResponse(
-        generated_reply="",
-        reply_reasoning=result.get("action_reasoning"),
+        generated_reply=shared_canvas["generated_reply"],
+        reply_reasoning=shared_canvas["reply_reasoning"],
     )

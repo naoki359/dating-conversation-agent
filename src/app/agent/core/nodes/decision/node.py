@@ -38,7 +38,7 @@ class DecisionNode(BaseNode):
             }
         )
 
-        self._debug_render_prompt(prompt_value, title=self.node_name)
+        # self._debug_render_prompt(prompt_value, title=self.node_name)
 
         structured_llm = self.llm.with_structured_output(DecisionOutputSchema)
         result = structured_llm.invoke(prompt_value)
