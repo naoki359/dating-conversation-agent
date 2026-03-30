@@ -20,8 +20,3 @@ class CheckReplyProfileFitResultSchema(BaseModel):
         default_factory=list,
         description="返信文をより本人らしくする改善提案。",
     )
-
-    revised_reply: str = Field(
-        default="",
-        description="必要に応じて改善後の返信例。",
-    )
