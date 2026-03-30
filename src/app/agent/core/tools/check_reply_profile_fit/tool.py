@@ -54,7 +54,7 @@ class CheckReplyProfileFitTool:
             )
             result = structured_llm.invoke(prompt_value)
 
-            print(result)
+            # print(result)
 
             return BaseToolResult(
                 tool_name=self.name,

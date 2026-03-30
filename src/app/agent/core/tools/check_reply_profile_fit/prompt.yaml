@@ -14,7 +14,6 @@ messages:
       - fit_score: 0-100 の整数
       - reasons: 箇条書き。具体的な根拠を2-5件
       - improvement_suggestions: 箇条書き。改善案を1-5件
-      - revised_reply: 改善後の返信例。改善不要なら元の返信をそのまま返す
 
       # 禁止事項
       - 根拠のない断定

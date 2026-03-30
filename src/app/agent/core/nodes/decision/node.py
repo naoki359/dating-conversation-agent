@@ -38,7 +38,7 @@ class DecisionNode(BaseNode):
             }
         )
 
-        self._debug_render_prompt(prompt_value, title=self.node_name)
+        # self._debug_render_prompt(prompt_value, title=self.node_name)
 
         structured_llm = self.llm.with_structured_output(DecisionOutputSchema)
         result = structured_llm.invoke(prompt_value)
@@ -182,11 +182,11 @@ class DecisionNode(BaseNode):
         print("相手の返答をもとに、次の進め方を整理しています...")
         print("")
 
-        if result.thought_process:
-            print("考えたこと:")
-            for i, step in enumerate(result.thought_process, start=1):
-                print(f"  {i}. {step}")
-            print("")
+        # if result.thought_process:
+        #     print("考えたこと:")
+        #     for i, step in enumerate(result.thought_process, start=1):
+        #         print(f"  {i}. {step}")
+        #     print("")
 
         print("結論:")
         print(f"  {result.summary}")
