@@ -38,6 +38,15 @@ class ActionNode(BaseNode):
         # ツールを実行
         tool_result = tool_method()
 
+        if not tool_result.success:
+            return BaseOutputSchema(
+                node_name=self.node_name,
+                success=False,
+                summary=f"{selected_tool.name} の実行に失敗しました。原因：{tool_result.summary}",
+                reasoning="ツールの実行に失敗。",
+                thought_process=[f"{selected_tool.name} 実行", F"実行失敗。原因: {tool_result.summary}"],
+            )
+
         # ツールの実行結果を基にCanvasDataを生成
         # ツールの実行結果がsuccess且つ、戻り値がGenerateReplyResultSchemaの形式であれば、生成された返信文をCanvasに含める
         if tool_result.success and selected_tool == ToolEnum.GENERATE_REPLY:
@@ -56,6 +65,12 @@ class ActionNode(BaseNode):
                     reasoning="GenerateReplyResultSchemaへの変換でエラーが発生。",
                     thought_process=["ツール実行", "結果の解析失敗"],
                 )
+            
+        # 実行したツールがCHECK_REPLY_PROFILE_FITであれば、観測フラグを立てる
+        if selected_tool in [ToolEnum.CHECK_REPLY_PROFILE_FIT] and tool_result.success:
+            state["observation_flg"] = True
+        else:
+            state["observation_flg"] = False
 
         return BaseOutputSchema(
             node_name=self.node_name,

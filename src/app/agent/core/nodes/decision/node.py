@@ -25,7 +25,7 @@ class DecisionNode(BaseNode):
     def execute(self, state: ReactState) -> DecisionOutputSchema:
         profile_text = self._build_profile_text()
         conversation_text = self._build_conversation_text()
-        past_thought_process_text = self._build_past_thought_process_text(state)
+        history = self._build_past_thought_process_text(state)
         tools_info = self._build_tools_info()
 
         prompt_value = self.prompt.invoke(
@@ -33,7 +33,7 @@ class DecisionNode(BaseNode):
                 "node_name": self.node_name,
                 "profile_text": profile_text,
                 "conversation_text": conversation_text,
-                "past_thought_process_text": past_thought_process_text,
+                "history": history,
                 "tools_info": tools_info,
             }
         )
@@ -55,7 +55,7 @@ class DecisionNode(BaseNode):
             "current_thought": node_result.current_thought,
             "required_tasks": node_result.required_tasks,
             "decided_action": node_result.decided_action,
-            "action_reasoning": node_result.reasoning,
+            "action_reasoning": node_result.reasoning
         }
 
         return updated_state

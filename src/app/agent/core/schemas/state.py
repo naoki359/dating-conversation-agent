@@ -35,6 +35,7 @@ class ReactState(TypedDict, total=False):
     # ===== Control =====
     is_finished: bool
     action_loop_count: int
+    observation_flg: bool
 
     # ===== Trace =====
     trace_id: str

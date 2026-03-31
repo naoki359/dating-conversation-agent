@@ -13,7 +13,7 @@ class CheckReplyProfileFitResultSchema(BaseModel):
 
     reasons: list[str] = Field(
         default_factory=list,
-        description="合致/不一致の主な理由。",
+        description="返信文のプロフィール合致度スコア（0-100）に対する理由",
     )
 
     improvement_suggestions: list[str] = Field(
