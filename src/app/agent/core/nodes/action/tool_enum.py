@@ -3,6 +3,7 @@ from enum import Enum
 from app.agent.core.tools.get_history.tool import GetHistoryTool
 from app.agent.core.tools.generate_reply.tool import GenerateReplyTool
 from app.agent.core.tools.check_reply_profile_fit.tool import CheckReplyProfileFitTool
+from app.agent.core.tools.refine_reply.tool import RefineReplyTool
 
 
 class ToolEnum(Enum):
@@ -27,6 +28,12 @@ class ToolEnum(Enum):
         CheckReplyProfileFitTool().execute,
         "返信文がユーザープロフィール/性格と合っているかを評価する",
         "返信文のプロフィール適合度と改善提案が得られ、最終返信を調整できる状態になる"
+    )
+
+    REFINE_REPLY = (
+        RefineReplyTool().execute,
+        "指摘事項を反映して既存の返信案を修正する",
+        "返信案が改善され、再評価または最終出力に進める状態になる"
     )
 
     def __init__(self, method, description, completion_state):

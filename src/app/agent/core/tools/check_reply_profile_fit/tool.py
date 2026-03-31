@@ -56,6 +56,9 @@ class CheckReplyProfileFitTool:
 
             # print(result)
 
+            shared_canvas["fit_score"] = result.fit_score
+            shared_canvas["improvement_suggestions"] = result.improvement_suggestions
+
             return BaseToolResult(
                 tool_name=self.name,
                 success=True,

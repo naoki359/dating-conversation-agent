@@ -10,10 +10,7 @@ messages:
       # 判断方針
       - 会話の自然さを優先する
       - 相手の興味や温度感を重視する
-      - まずは幅広く「必要なタスク」を洗い出す
-      - required_tasks には、今すぐ実行しない候補が含まれていてもよい
       - decided_action には今回このステップで実行するタスクを1つだけ入れる
-      - 実装済みツールに無理に寄せず、状況に対して本来必要なタスクを考える
       - success は通常 true とする
 
       # 出力ルール
@@ -51,4 +48,4 @@ messages:
       {conversation_text}
 
       [これまでの思考過程]
-      {past_thought_process_text}
+      {history}

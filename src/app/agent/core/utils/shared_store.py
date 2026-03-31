@@ -92,8 +92,23 @@ class Canvas(TypedDict, total=False):
     ReactStateの最終アウトプットとして最後にユーザーに返す。
     """
 
+    # -----------------------------------
+    # 出力
+    # -----------------------------------
+    # 返信内容
     generated_reply: str
+    # 返信内容を作成した理由
     reply_reasoning: str
+
+    # -----------------------------------
+    # 出力に対する評価
+    # -----------------------------------
+    # プロフィール/性格との合致度スコア(0-100)。
+    fit_score: int
+    # プロフィール/性格との合致度スコア(0-100)。に対する理由
+    reasons: list[str]
+    # 返信文のプロフィール適合度に基づく改善提案
+    improvement_suggestions: str
     # reply_check_result: dict[str, Any]
 
 
