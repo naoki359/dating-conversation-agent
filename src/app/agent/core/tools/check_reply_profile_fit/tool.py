@@ -1,6 +1,4 @@
 from pathlib import Path
-from textwrap import dedent
-from typing import Any
 
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
@@ -57,7 +55,17 @@ class CheckReplyProfileFitTool:
             # print(result)
 
             shared_canvas["fit_score"] = result.fit_score
-            shared_canvas["improvement_suggestions"] = result.improvement_suggestions
+            existing_suggestions = shared_canvas.get("improvement_suggestions", [])
+            new_suggestions = list(result.improvement_suggestions)
+
+            if isinstance(existing_suggestions, list):
+                merged_suggestions = existing_suggestions + new_suggestions
+            elif isinstance(existing_suggestions, str) and existing_suggestions.strip():
+                merged_suggestions = [existing_suggestions.strip()] + new_suggestions
+            else:
+                merged_suggestions = new_suggestions
+
+            shared_canvas["improvement_suggestions"] = self._dedupe_list(merged_suggestions)
 
             return BaseToolResult(
                 tool_name=self.name,
@@ -75,3 +83,16 @@ class CheckReplyProfileFitTool:
 
     def _get_prompt_path(self) -> Path:
         return Path(__file__).resolve().parent / "prompt.yaml"
+
+    def _dedupe_list(self, items: list[str]) -> list[str]:
+        deduped: list[str] = []
+        seen: set[str] = set()
+
+        for item in items:
+            normalized = item.strip()
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            deduped.append(normalized)
+
+        return deduped

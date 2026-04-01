@@ -11,7 +11,8 @@ from app.agent.core.utils.shared_store import shared_canvas
 
 class ObserveNode(BaseNode):
     """
-    各ステップの終わりに状態を監視し、fit_score と action_loop_count に基づいて
+    各ステップの終わりに状態を監視し、fit_score・reply_quality_score と
+    action_loop_count に基づいて
     ループを継続するか終了するかを判定するノード。
     """
 
@@ -19,13 +20,15 @@ class ObserveNode(BaseNode):
 
     # パラメータ
     FIT_SCORE_THRESHOLD = 80  # fit_score がこの値以上なら継続を検討
+    REPLY_QUALITY_SCORE_THRESHOLD = 70  # 返信品質スコアがこの値以上なら継続を検討
     MAX_ACTION_LOOP_COUNT = 10  # 最大ループ回数
 
     def execute(self, state: ReactState) -> ObserveOutputSchema:
         """
-        fit_score と action_loop_count を確認し、判定を行う。
+        fit_score・reply_quality_score と action_loop_count を確認し、判定を行う。
         """
-        fit_score = shared_canvas.get("fit_score")
+        fit_score = int(shared_canvas.get("fit_score", 0) or 0)
+        reply_quality_score = int(shared_canvas.get("reply_quality_score", 0) or 0)
         action_loop_count = state.get("action_loop_count", 0)
 
         if not state.get("observation_flg", False):
@@ -39,12 +42,20 @@ class ObserveNode(BaseNode):
                 reasoning="評価がまだ行われていない為、終了条件を満たしていない",
             )
 
-        decision, reasoning = self._make_decision(fit_score, action_loop_count)
+        decision, reasoning = self._make_decision(
+            fit_score,
+            reply_quality_score,
+            action_loop_count,
+        )
 
         result = ObserveOutputSchema(
             node_name=self.node_name,
             success=True,
-            summary=f"fit_score={fit_score}, action_loop_count={action_loop_count} に基づいて '{decision}' と判定。指摘事項を基に返信の再作成を行うこと",
+            summary=(
+                f"fit_score={fit_score}, reply_quality_score={reply_quality_score}, "
+                f"action_loop_count={action_loop_count} に基づいて '{decision}' と判定。"
+                "指摘事項を基に返信の再作成を行うこと"
+            ),
             fit_score=fit_score,
             action_loop_count=action_loop_count,
             decision=decision,
@@ -71,13 +82,20 @@ class ObserveNode(BaseNode):
     def canvas_update(self, node_result: BaseOutputSchema) -> None:
         print("\n=== ObserveNode ===")
         print(f"fit_score: {shared_canvas.get('fit_score', 0)}")
+        print(f"reply_quality_score: {shared_canvas.get('reply_quality_score', 0)}")
         print(f"action_loop_count: {node_result.action_loop_count}")
         print(f"decision: {node_result.decision}")
         print(f"reasoning: {node_result.reasoning}")
 
-    def _make_decision(self, fit_score: int, action_loop_count: int) -> tuple[str, str]:
+    def _make_decision(
+        self,
+        fit_score: int,
+        reply_quality_score: int,
+        action_loop_count: int,
+    ) -> tuple[str, str]:
         """
-        fit_score と action_loop_count に基づいて、継続するか終了するかを判定する。
+        fit_score・reply_quality_score と action_loop_count に基づいて、
+        継続するか終了するかを判定する。
 
         Returns:
             tuple[str, str]: ("continue" or "end", reasoning)
@@ -91,17 +109,24 @@ class ObserveNode(BaseNode):
             )
             return "end", reason
 
-        # fit_score が閾値以上の場合は終了
-        if fit_score >= self.FIT_SCORE_THRESHOLD:
+        # fit_score と reply_quality_score の両方が閾値以上の場合は終了
+        if (
+            fit_score >= self.FIT_SCORE_THRESHOLD
+            and reply_quality_score >= self.REPLY_QUALITY_SCORE_THRESHOLD
+        ):
             reason = (
-                f"fit_score（{fit_score}）が閾値（{self.FIT_SCORE_THRESHOLD}）以上"
-                "であるため、品質基準を満たしています。ループを終了します。"
+                f"fit_score（{fit_score}）が閾値（{self.FIT_SCORE_THRESHOLD}）以上、"
+                f"reply_quality_score（{reply_quality_score}）が閾値"
+                f"（{self.REPLY_QUALITY_SCORE_THRESHOLD}）以上であるため、"
+                "品質基準を満たしています。ループを終了します。"
             )
             return "end", reason
 
         # それ以外は継続
         reason = (
-            f"fit_score（{fit_score}）が閾値（{self.FIT_SCORE_THRESHOLD}）未満"
+            f"fit_score（{fit_score}）または reply_quality_score（{reply_quality_score}）"
+            f"が閾値（fit: {self.FIT_SCORE_THRESHOLD}, quality: {self.REPLY_QUALITY_SCORE_THRESHOLD}）"
+            "を満たしておらず"
             f"で、ループ回数（{action_loop_count}）が上限（{self.MAX_ACTION_LOOP_COUNT}）"
             "に達していないため、品質向上のため継続します。"
         )

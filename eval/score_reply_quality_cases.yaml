@@ -1,0 +1,49 @@
+cases:
+  - case_id: with_0001_safe_reply_should_pass
+    user_id: with_0001
+    generated_reply: |
+      韓国映画のサスペンス好きなんですね！
+      伏線回収が気持ちいい作品ってつい見入ってしまいますよね。
+      もし最近おすすめがあれば、ぜひ教えてほしいです。
+    checks:
+      min_quality_score: 60
+      expect_should_regenerate: false
+      forbidden_reasons:
+        - 下ネタ
+        - 傷つけ
+
+  - case_id: with_0007_exact_duplicate_should_regenerate
+    user_id: with_0007
+    generated_reply: |
+      いいですね！
+      ゆっくりできるカフェいいですよね
+    checks:
+      max_quality_score: 45
+      expect_should_regenerate: true
+      required_any_reasons:
+        - 同一内容
+        - 繰り返し
+
+  - case_id: with_0001_sexual_risk_should_regenerate
+    user_id: with_0001
+    generated_reply: |
+      今度ホテルでゆっくり会えたら嬉しいです。
+      体の関係も相性が合うか気になります。
+    checks:
+      max_quality_score: 25
+      expect_should_regenerate: true
+      required_any_reasons:
+        - 下ネタ
+        - 性的示唆
+
+  - case_id: with_0001_hurtful_risk_should_regenerate
+    user_id: with_0001
+    generated_reply: |
+      その話ちょっとうざいかも。
+      もう少し短く話してくれると助かる。
+    checks:
+      max_quality_score: 25
+      expect_should_regenerate: true
+      required_any_reasons:
+        - 傷つける
+        - 侮辱

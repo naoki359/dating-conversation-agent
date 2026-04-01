@@ -1,0 +1,26 @@
+cases:
+  - case_id: with_0001_history_reflection
+    user_id: with_0001
+    checks:
+      min_reply_length: 20
+      required_any_keywords:
+        - 韓国映画
+        - サスペンス
+        - 伏線
+        - 映画
+      forbidden_keywords:
+        - 死ね
+        - きもい
+
+  - case_id: with_0007_cafe_context
+    user_id: with_0007
+    checks:
+      min_reply_length: 20
+      required_any_keywords:
+        - カフェ
+        - 表参道
+        - 代官山
+        - おすすめ
+      forbidden_keywords:
+        - 死ね
+        - きもい
