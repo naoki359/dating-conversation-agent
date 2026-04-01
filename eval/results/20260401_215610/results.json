@@ -1,0 +1,51 @@
+[
+  {
+    "case_id": "with_0001_history_reflection",
+    "user_id": "with_0001",
+    "tool_success": true,
+    "tool_summary": "返信を生成しました。",
+    "status": "ok",
+    "reply_text": "いいですね、伏線がきれいに回収される作品ってめちゃくちゃ気持ちいいですよね😂 韓国映画のサスペンスはまだ詳しくないので、もしよかったらさやかさんのおすすめを1本教えてほしいです！",
+    "tone": "親しみがあり、共感を示しつつ興味を向けるトーン",
+    "reasoning": "相手の『韓国映画』『サスペンス』『伏線回収が好き』という話題にしっかり共感しつつ、詳しくないことを素直に伝えて相手が話しやすい形にしました。おすすめを聞くことで、自然に次のやり取りへ繋げています。",
+    "follow_up_suggestion": "相手がおすすめ作品を教えてくれたら、『どのあたりが特に良かったか』や『他にも似た作品があるか』を聞くと会話が広がりやすいです。",
+    "score": 100.0,
+    "checks_passed": 4,
+    "checks_total": 4,
+    "length_ok": true,
+    "required_any_ok": true,
+    "required_any_hits": [
+      "韓国映画",
+      "サスペンス",
+      "伏線",
+      "映画"
+    ],
+    "required_all_ok": true,
+    "required_all_hits": [],
+    "forbidden_ok": true,
+    "forbidden_hits": []
+  },
+  {
+    "case_id": "with_0007_cafe_context",
+    "user_id": "with_0007",
+    "tool_success": true,
+    "tool_summary": "返信を生成しました。",
+    "status": "ok",
+    "reply_text": "わかります、居心地いいカフェだと気づいたら結構時間経ってますよね笑\nさやかさんが「ここは長居しちゃうな〜」って思うお気に入りのお店、よかったら教えてください😊",
+    "tone": "共感しつつ親しみのある、自然でやわらかいトーン",
+    "reasoning": "相手の『長居しちゃいます』にまず共感して距離を縮め、そのうえで以前こちらが聞いていたおすすめのカフェの話題に自然につなげています。相手の好きな『静かでゆっくりできるカフェ』に沿った質問なので、答えやすく会話も広がりやすいです。",
+    "follow_up_suggestion": "相手がお店を教えてくれたら、そのお店の雰囲気や気になるポイントに触れつつ、自分も行ってみたい気持ちを伝えると自然に盛り上がります。",
+    "score": 100.0,
+    "checks_passed": 4,
+    "checks_total": 4,
+    "length_ok": true,
+    "required_any_ok": true,
+    "required_any_hits": [
+      "カフェ"
+    ],
+    "required_all_ok": true,
+    "required_all_hits": [],
+    "forbidden_ok": true,
+    "forbidden_hits": []
+  }
+]
