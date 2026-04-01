@@ -4,6 +4,7 @@ from app.agent.core.tools.get_history.tool import GetHistoryTool
 from app.agent.core.tools.generate_reply.tool import GenerateReplyTool
 from app.agent.core.tools.check_reply_profile_fit.tool import CheckReplyProfileFitTool
 from app.agent.core.tools.refine_reply.tool import RefineReplyTool
+from app.agent.core.tools.score_reply_quality.tool import ScoreReplyQualityTool
 
 
 class ToolEnum(Enum):
@@ -34,6 +35,12 @@ class ToolEnum(Enum):
         RefineReplyTool().execute,
         "指摘事項を反映して既存の返信案を修正する",
         "返信案が改善され、再評価または最終出力に進める状態になる"
+    )
+
+    SCORE_REPLY_QUALITY = (
+        ScoreReplyQualityTool().execute,
+        "生成済み返信の品質・安全性を評価し、再作成要否と指摘事項を返す",
+        "返信品質スコアと指摘事項が得られ、再作成または改善判断ができる状態になる"
     )
 
     def __init__(self, method, description, completion_state):

@@ -53,6 +53,9 @@ class GenerateReplyTool:
         conversation_text = self._build_conversation_text(messages)
         latest_message_text = latest_message.get("message", "")
 
+        # print("=== プロンプト用テキスト（会話履歴） ===")
+        # print(conversation_text)
+
         try:
             # LLMに構造化出力を指定
             prompt_value = self.prompt.invoke(
@@ -69,7 +72,7 @@ class GenerateReplyTool:
             return BaseToolResult(
                 tool_name=self.name,
                 success=True,
-                summary=f"返信を生成しました。",
+                summary="返信を生成しました。",
                 data=result.model_dump(),
             )
         except Exception as e:

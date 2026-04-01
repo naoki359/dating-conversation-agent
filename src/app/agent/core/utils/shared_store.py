@@ -108,7 +108,14 @@ class Canvas(TypedDict, total=False):
     # プロフィール/性格との合致度スコア(0-100)。に対する理由
     reasons: list[str]
     # 返信文のプロフィール適合度に基づく改善提案
-    improvement_suggestions: str
+    improvement_suggestions: list[str]
+
+    # -----------------------------------
+    # 返信品質スコア
+    # -----------------------------------
+    reply_quality_score: int
+    reply_should_regenerate: bool
+    reply_quality_reasons: list[str]
     # reply_check_result: dict[str, Any]
 
 
