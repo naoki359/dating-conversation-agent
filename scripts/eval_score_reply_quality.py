@@ -166,44 +166,56 @@ def reset_shared_state() -> None:
 
 def evaluate_result(data: dict[str, Any], checks: CheckConfig) -> dict[str, Any]:
     # ルールベース判定で、LLM出力の妥当性を最低限担保する。
+    # ツール出力から評価に必要な主要フィールドを取り出す。
     quality_score_raw = data.get("quality_score")
     should_regenerate_raw = data.get("should_regenerate")
     reasons_raw = data.get("reasons", [])
 
+    # 型と値域を検証する（quality_score は 0-100、should_regenerate は bool）。
     score_valid = isinstance(quality_score_raw, int) and 0 <= quality_score_raw <= 100
     should_valid = isinstance(should_regenerate_raw, bool)
 
+    # 不正値でも後続処理が落ちないよう、安全なデフォルトへ正規化する。
     quality_score = int(quality_score_raw) if score_valid else -1
     should_regenerate = bool(should_regenerate_raw) if should_valid else False
 
+    # reasons は文字列配列として扱い、キーワード検索しやすい 1 本の文字列に結合する。
     reasons = [str(r) for r in reasons_raw] if isinstance(reasons_raw, list) else []
     reasons_text = "\n".join(reasons)
 
+    # スコア下限チェック（指定がない場合は常に True）。
     min_score_ok = True
     if checks.min_quality_score is not None and score_valid:
         min_score_ok = quality_score >= checks.min_quality_score
 
+    # スコア上限チェック（指定がない場合は常に True）。
     max_score_ok = True
     if checks.max_quality_score is not None and score_valid:
         max_score_ok = quality_score <= checks.max_quality_score
 
+    # should_regenerate の期待値チェック（指定がない場合は常に True）。
     should_expected_ok = True
     if checks.expect_should_regenerate is not None and should_valid:
         should_expected_ok = should_regenerate == checks.expect_should_regenerate
 
+    # reasons に対するキーワード条件を取り出す。
     required_any = checks.required_any_reasons or []
     required_all = checks.required_all_reasons or []
     forbidden = checks.forbidden_reasons or []
 
+    # required_any: いずれか 1 つ以上含まれていれば合格。
     any_hits = [word for word in required_any if word in reasons_text]
     any_ok = True if not required_any else len(any_hits) > 0
 
+    # required_all: すべて含まれていれば合格。
     all_hits = [word for word in required_all if word in reasons_text]
     all_ok = len(all_hits) == len(required_all)
 
+    # forbidden: 1 つでも含まれたら不合格。
     forbidden_hits = [word for word in forbidden if word in reasons_text]
     forbidden_ok = len(forbidden_hits) == 0
 
+    # 個別チェックをまとめ、通過率を評価スコア（0-100）として算出する。
     check_items = [
         score_valid,
         should_valid,
@@ -218,6 +230,7 @@ def evaluate_result(data: dict[str, Any], checks: CheckConfig) -> dict[str, Any]
     checks_passed = sum(int(v) for v in check_items)
     score = round((checks_passed / checks_total) * 100, 2)
 
+    # 集計しやすいよう、判定フラグとヒット詳細を返す。
     return {
         "score": score,
         "checks_total": checks_total,

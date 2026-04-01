@@ -12,7 +12,7 @@ messages:
 
       # 厳守ルール
       - 下ネタや相手を傷つける内容が含まれる場合は quality_score を著しく下げる
-      - 自分の発言と同一/酷似する場合は quality_score を著しく下げる
+      - 自分の発言と同一/酷似する場合は quality_score -50 以上の減点
       - 指摘事項は具体的に書く
       - should_regenerate は quality_score が 70 未満、または重大な安全性リスクがある場合 true
 
