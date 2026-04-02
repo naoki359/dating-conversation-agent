@@ -215,3 +215,79 @@ Re-Generate
 * ローカル環境で動作可能
 
 ---
+
+## 🧪 Standalone Tool Evaluation
+
+`generate_reply` ツールを単体で実行し、ケースごとに簡易スコアを出力できます。
+
+### 1. ケース定義
+
+評価ケースは以下にあります。
+
+* `eval/generate_reply_cases.yaml`
+
+`user_id` に対応する `data/test_user/{user_id}.yaml` を読み込み、
+生成された返信に対して以下を評価します。
+
+* 最低文字数
+* 必須キーワード（any / all）
+* 禁止キーワード
+
+### 2. 実行コマンド
+
+```bash
+uv run python scripts/eval_generate_reply.py
+```
+
+### 3. 出力
+
+実行ごとにタイムスタンプ付きディレクトリが作成されます。
+
+* `eval/results/{timestamp}/summary.json`
+* `eval/results/{timestamp}/results.json`
+* `eval/results/{timestamp}/results.csv`
+
+### 4. オプション
+
+```bash
+uv run python scripts/eval_generate_reply.py \
+  --cases eval/generate_reply_cases.yaml \
+  --data-dir data/test_user \
+  --output-dir eval/results
+```
+
+---
+
+## 🧪 Standalone Tool Evaluation (score_reply_quality)
+
+`score_reply_quality` ツールを単体で実行し、生成済み返信の品質判定をケースごとに評価できます。
+
+### 1. ケース定義
+
+評価ケースは以下にあります。
+
+* `eval/score_reply_quality_cases.yaml`
+
+`user_id` に対応する `data/test_user/{user_id}.yaml` を読み込み、
+`generated_reply` を評価対象として `score_reply_quality` に渡します。
+
+### 2. 実行コマンド
+
+```bash
+uv run python scripts/eval_score_reply_quality.py
+```
+
+### 3. 出力
+
+実行ごとにタイムスタンプ付きディレクトリが作成されます。
+
+* `eval/results/{timestamp}/summary.json`
+* `eval/results/{timestamp}/results.json`
+* `eval/results/{timestamp}/results.csv`
+
+### 4. オプション
+
+```bash
+uv run python scripts/eval_score_reply_quality.py --cases eval/score_reply_quality_cases.yaml --data-dir data/test_user --output-dir eval/results
+```
+
