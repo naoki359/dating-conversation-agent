@@ -6,7 +6,7 @@ from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.tools.refine_reply.schema import RefineReplyResultSchema
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
-from app.agent.core.utils.shared_store import shared_canvas, shared_store
+from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
 
 class RefineReplyTool:
@@ -19,12 +19,14 @@ class RefineReplyTool:
         self.llm = get_chat_model_gpt5_4()
         self.prompt = load_prompt_from_yaml(self._get_prompt_path())
 
-    def execute(self) -> BaseToolResult:
-        original_reply = shared_canvas.get("generated_reply", "")
-        fit_score = shared_canvas.get("fit_score")
-        self_profile = shared_store.get("self_profile", {})
-        partner_profile = shared_store.get("profile", {})
-        conversation = shared_store.get("conversation", {})
+    def execute(self, execution_id: str | None = None) -> BaseToolResult:
+        scoped_store = get_shared_store(execution_id)
+        scoped_canvas = get_shared_canvas(execution_id)
+        original_reply = scoped_canvas.get("generated_reply", "")
+        fit_score = scoped_canvas.get("fit_score")
+        self_profile = scoped_store.get("self_profile", {})
+        partner_profile = scoped_store.get("profile", {})
+        conversation = scoped_store.get("conversation", {})
 
         if not original_reply:
             return BaseToolResult(
@@ -34,7 +36,7 @@ class RefineReplyTool:
                 data={},
             )
 
-        feedback_items = self._collect_feedback()
+        feedback_items = self._collect_feedback(scoped_canvas)
         feedback_text = self._build_feedback_text(feedback_items)
 
         try:
@@ -52,8 +54,8 @@ class RefineReplyTool:
             structured_llm = self.llm.with_structured_output(RefineReplyResultSchema)
             result = structured_llm.invoke(prompt_value)
 
-            shared_canvas["generated_reply"] = result.refined_reply
-            shared_canvas["reply_reasoning"] = result.reasoning
+            scoped_canvas["generated_reply"] = result.refined_reply
+            scoped_canvas["reply_reasoning"] = result.reasoning
 
             return BaseToolResult(
                 tool_name=self.name,
@@ -72,10 +74,10 @@ class RefineReplyTool:
     def _get_prompt_path(self) -> Path:
         return Path(__file__).resolve().parent / "prompt.yaml"
 
-    def _collect_feedback(self) -> list[str]:
+    def _collect_feedback(self, scoped_canvas: dict[str, Any]) -> list[str]:
         feedback_items: list[str] = []
 
-        raw_feedback = shared_canvas.get("fit_improvement_suggestion")
+        raw_feedback = scoped_canvas.get("fit_improvement_suggestion")
         if isinstance(raw_feedback, str) and raw_feedback.strip():
             feedback_items.append(raw_feedback.strip())
         elif isinstance(raw_feedback, list):
@@ -85,7 +87,7 @@ class RefineReplyTool:
                 if isinstance(item, str) and item.strip()
             )
 
-        reasons = shared_canvas.get("reasons")
+        reasons = scoped_canvas.get("reasons")
         if isinstance(reasons, list):
             feedback_items.extend(
                 reason.strip()

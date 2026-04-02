@@ -6,7 +6,7 @@ from app.agent.core.tools.check_reply_profile_fit.schema import (
     CheckReplyProfileFitResultSchema,
 )
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
-from app.agent.core.utils.shared_store import shared_store, shared_canvas
+from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
 
 class CheckReplyProfileFitTool:
@@ -19,9 +19,11 @@ class CheckReplyProfileFitTool:
         self.llm = get_chat_model_gpt5_4()
         self.prompt = load_prompt_from_yaml(self._get_prompt_path())
 
-    def execute(self) -> BaseToolResult:
-        profile = shared_store.get("self_profile", {})
-        reply_text = shared_canvas.get("generated_reply", "")
+    def execute(self, execution_id: str | None = None) -> BaseToolResult:
+        scoped_store = get_shared_store(execution_id)
+        scoped_canvas = get_shared_canvas(execution_id)
+        profile = scoped_store.get("self_profile", {})
+        reply_text = scoped_canvas.get("generated_reply", "")
 
         if not profile:
             return BaseToolResult(
@@ -54,8 +56,8 @@ class CheckReplyProfileFitTool:
 
             # print(result)
 
-            shared_canvas["fit_score"] = result.fit_score
-            existing_suggestions = shared_canvas.get("improvement_suggestions", [])
+            scoped_canvas["fit_score"] = result.fit_score
+            existing_suggestions = scoped_canvas.get("improvement_suggestions", [])
             new_suggestions = list(result.improvement_suggestions)
 
             if isinstance(existing_suggestions, list):
@@ -65,7 +67,7 @@ class CheckReplyProfileFitTool:
             else:
                 merged_suggestions = new_suggestions
 
-            shared_canvas["improvement_suggestions"] = self._dedupe_list(merged_suggestions)
+            scoped_canvas["improvement_suggestions"] = self._dedupe_list(merged_suggestions)
 
             return BaseToolResult(
                 tool_name=self.name,

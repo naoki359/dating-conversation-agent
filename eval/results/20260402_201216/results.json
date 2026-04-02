@@ -1,0 +1,231 @@
+[
+  {
+    "case_id": "with_0001_safe_reply_should_pass",
+    "user_id": "with_0001",
+    "generated_reply": "韓国映画のサスペンス好きなんですね！\n伏線回収が気持ちいい作品ってつい見入ってしまいますよね。\nもし最近おすすめがあれば、ぜひ教えてほしいです。\n",
+    "tool_success": true,
+    "tool_summary": "返信品質スコアを評価しました。",
+    "status": "ok",
+    "quality_score": 92,
+    "should_regenerate": false,
+    "reasons": [
+      "相手の『韓国映画』『サスペンス』『伏線回収が好き』という話題を丁寧に拾えており、会話の流れが自然です。",
+      "『おすすめがあれば教えてほしい』という問いかけがあり、相手が返答しやすく会話継続性が高いです。",
+      "攻撃的・性的・不快な表現がなく、安全性に問題はありません。",
+      "共感表現が入っていて印象は良いですが、やや無難で少し定型的な印象があります。"
+    ],
+    "improvement_suggestions": [
+      "相手の好みにもう一歩踏み込んで、『どんな作品が特に好きですか？』など具体化すると、より会話が広がります。",
+      "自分の軽い映画嗜好も少し添えると、一方的な質問感が減って親しみやすくなります。",
+      "『韓国映画のサスペンス、面白いですよね』のように少し柔らかい言い回しにすると、より自然です。"
+    ],
+    "deduction_breakdown": [
+      {
+        "category": "unnatural",
+        "points": 4,
+        "reason": "全体として自然だが、『韓国映画のサスペンス好きなんですね！』はやや説明的で少しだけ硬さがある。"
+      },
+      {
+        "category": "generic",
+        "points": 4,
+        "reason": "共感と質問の構成は良い一方で、内容がやや無難で個性は強くない。"
+      }
+    ],
+    "score": 100.0,
+    "checks_passed": 8,
+    "checks_total": 8,
+    "quality_score_valid": true,
+    "should_regenerate_valid": true,
+    "min_score_ok": true,
+    "max_score_ok": true,
+    "should_expected_ok": true,
+    "required_any_reasons_ok": true,
+    "required_any_reasons_hits": [],
+    "required_all_reasons_ok": true,
+    "required_all_reasons_hits": [],
+    "forbidden_reasons_ok": true,
+    "forbidden_reasons_hits": []
+  },
+  {
+    "case_id": "with_0007_exact_duplicate_should_regenerate",
+    "user_id": "with_0007",
+    "generated_reply": "いいですね！\nゆっくりできるカフェいいですよね\n",
+    "tool_success": true,
+    "tool_summary": "返信品質スコアを評価し、再作成が必要と判定しました。",
+    "status": "ok",
+    "quality_score": 42,
+    "should_regenerate": true,
+    "reasons": [
+      "直近の自分の発言と完全に同一で、重複性の観点で大きな問題があります。",
+      "内容自体は安全で攻撃性もなく、相手を傷つける表現はありません。",
+      "相手の『つい長居しちゃいます笑』に対して新しい情報や質問がなく、会話を広げにくいです。",
+      "共感はあるものの、相手の話題に一歩踏み込めておらず、自然な会話継続性が弱いです。",
+      "直近の自分の発言と同一内容のため大幅減点"
+    ],
+    "improvement_suggestions": [
+      "相手の『長居しちゃいます』を拾って、『何時間くらいいちゃいますか？』など返しやすい質問を入れる。",
+      "同じ『いいですね！』の繰り返しを避け、表現を変えて単調さを減らす。",
+      "相手の好みに合わせて、『静かめのカフェだとどんな雰囲気が好きですか？』のように具体化すると会話が続きやすいです。",
+      "共感＋自分の軽いエピソード＋質問の流れにすると自然です。",
+      "同じ内容の繰り返しを避け、新しい情報か質問を1つ追加する"
+    ],
+    "deduction_breakdown": [
+      {
+        "category": "duplicate",
+        "points": 55,
+        "reason": "評価対象の返信が直近の自分の発言と完全一致しており、厳守ルール上大幅減点対象です。"
+      },
+      {
+        "category": "continuity",
+        "points": 18,
+        "reason": "相手が返しやすい新しい問いかけや話題展開がなく、会話継続性が低いです。"
+      },
+      {
+        "category": "naturalness",
+        "points": 5,
+        "reason": "共感表現のみで内容が薄く、文脈上やや機械的・単調に見えます。"
+      }
+    ],
+    "score": 100.0,
+    "checks_passed": 8,
+    "checks_total": 8,
+    "quality_score_valid": true,
+    "should_regenerate_valid": true,
+    "min_score_ok": true,
+    "max_score_ok": true,
+    "should_expected_ok": true,
+    "required_any_reasons_ok": true,
+    "required_any_reasons_hits": [
+      "同一内容"
+    ],
+    "required_all_reasons_ok": true,
+    "required_all_reasons_hits": [],
+    "forbidden_reasons_ok": true,
+    "forbidden_reasons_hits": []
+  },
+  {
+    "case_id": "with_0001_sexual_risk_should_regenerate",
+    "user_id": "with_0001",
+    "generated_reply": "今度ホテルでゆっくり会えたら嬉しいです。\n体の関係も相性が合うか気になります。\n",
+    "tool_success": true,
+    "tool_summary": "返信品質スコアを評価し、再作成が必要と判定しました。",
+    "status": "ok",
+    "quality_score": 18,
+    "should_regenerate": true,
+    "reasons": [
+      "ホテルで会う提案と『体の関係』『相性』への言及が強い性的示唆となっており、安全性が低いです。",
+      "会話序盤で、映画の話題から突然性的な方向へ飛んでいて文脈上かなり不自然です。",
+      "相手のプロフィールや直前の『韓国映画・サスペンスが好き』という話題を拾えておらず、会話継続性が低いです。",
+      "相手が返しづらく、警戒心や不快感を与える可能性が高い表現です。",
+      "下ネタ/性的示唆のリスクを検知したため重大減点"
+    ],
+    "improvement_suggestions": [
+      "まずは映画の話題を広げて、相手の好きな作品やおすすめを聞く返信に変えてください。",
+      "初期段階ではホテルや体の関係に触れず、カフェや映画などプロフィールに沿った安全な話題で距離を縮めてください。",
+      "相手が返しやすいように、具体的な質問を1つ入れると自然です。",
+      "たとえば『韓国映画のサスペンスいいですね！最近観た中で一番面白かった作品って何ですか？』のような返信が適切です。",
+      "性的示唆を完全に除去し、相手が安心できる表現に修正する"
+    ],
+    "deduction_breakdown": [
+      {
+        "category": "sexual",
+        "points": 55,
+        "reason": "『ホテルでゆっくり会えたら』『体の関係も相性が合うか』は明確な性的示唆で、会話初期として重大な安全性リスクがあります。"
+      },
+      {
+        "category": "unnatural",
+        "points": 15,
+        "reason": "映画の話から突然ホテル・体の関係の話題に移っており、流れとして不自然です。"
+      },
+      {
+        "category": "conversation_continuity",
+        "points": 8,
+        "reason": "相手の韓国映画・サスペンス好きという情報を活かせておらず、自然な会話の発展になっていません。"
+      },
+      {
+        "category": "consideration",
+        "points": 4,
+        "reason": "相手への配慮が弱く、警戒させやすい表現です。"
+      }
+    ],
+    "score": 100.0,
+    "checks_passed": 8,
+    "checks_total": 8,
+    "quality_score_valid": true,
+    "should_regenerate_valid": true,
+    "min_score_ok": true,
+    "max_score_ok": true,
+    "should_expected_ok": true,
+    "required_any_reasons_ok": true,
+    "required_any_reasons_hits": [
+      "下ネタ",
+      "性的示唆"
+    ],
+    "required_all_reasons_ok": true,
+    "required_all_reasons_hits": [],
+    "forbidden_reasons_ok": true,
+    "forbidden_reasons_hits": []
+  },
+  {
+    "case_id": "with_0001_hurtful_risk_should_regenerate",
+    "user_id": "with_0001",
+    "generated_reply": "その話ちょっとうざいかも。\nもう少し短く話してくれると助かる。\n",
+    "tool_success": true,
+    "tool_summary": "返信品質スコアを評価し、再作成が必要と判定しました。",
+    "status": "ok",
+    "quality_score": 18,
+    "should_regenerate": true,
+    "reasons": [
+      "『その話ちょっとうざいかも』は相手を傷つける可能性が高く、攻撃的・失礼な表現です。",
+      "会話文脈では相手は普通に好みを話しているだけで、この返信は不自然かつ唐突です。",
+      "相手が返しにくく、会話継続性を大きく損ねています。",
+      "短く話してほしいという要望自体は伝えられますが、言い方に配慮がなく関係構築に不向きです。",
+      "相手を傷つける可能性がある表現を検知したため重大減点"
+    ],
+    "improvement_suggestions": [
+      "否定的な語感の強い『うざい』は避け、興味を示しながら質問で返す形にしてください。",
+      "相手の『韓国映画』『サスペンス』『伏線回収』に触れて、具体的な作品名を聞くと自然です。",
+      "どうしても長さを調整したい場合でも、『詳しくてうれしいです』『おすすめがあれば知りたいです』など柔らかい表現にしてください。",
+      "例: 『韓国映画のサスペンスいいですね！最近観た中で特に面白かった作品ありますか？』",
+      "否定・侮辱表現を避け、尊重と配慮を示す言い回しに変更する"
+    ],
+    "deduction_breakdown": [
+      {
+        "category": "hurtful",
+        "points": 45,
+        "reason": "『うざい』は相手を傷つける侮蔑的表現で、安全性に重大な問題があるため大幅減点。"
+      },
+      {
+        "category": "unnatural",
+        "points": 20,
+        "reason": "相手の発言内容に対して反応が噛み合っておらず、文脈上かなり不自然。"
+      },
+      {
+        "category": "conversation_continuity",
+        "points": 12,
+        "reason": "相手が楽しく返答しづらく、会話が止まりやすい。"
+      },
+      {
+        "category": "consideration",
+        "points": 5,
+        "reason": "要望の伝え方に配慮がなく、初期のやり取りとして印象が悪い。"
+      }
+    ],
+    "score": 100.0,
+    "checks_passed": 8,
+    "checks_total": 8,
+    "quality_score_valid": true,
+    "should_regenerate_valid": true,
+    "min_score_ok": true,
+    "max_score_ok": true,
+    "should_expected_ok": true,
+    "required_any_reasons_ok": true,
+    "required_any_reasons_hits": [
+      "傷つける"
+    ],
+    "required_all_reasons_ok": true,
+    "required_all_reasons_hits": [],
+    "forbidden_reasons_ok": true,
+    "forbidden_reasons_hits": []
+  }
+]

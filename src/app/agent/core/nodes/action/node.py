@@ -3,7 +3,7 @@ from app.agent.core.schemas.base_output_schema import BaseOutputSchema
 from app.agent.core.schemas.state import ReactState
 from app.agent.core.nodes.action.tool_enum import ToolEnum
 from app.agent.core.tools.generate_reply.schema import GenerateReplyResultSchema
-from app.agent.core.utils.shared_store import shared_canvas
+from app.agent.core.utils.shared_store import get_shared_canvas
 
 
 class ActionNode(BaseNode):
@@ -20,6 +20,16 @@ class ActionNode(BaseNode):
 
     def execute(self, state: ReactState) -> BaseOutputSchema:
         decided_action = state.get("decided_action", "")
+        execution_id = state.get("execution_id")
+
+        if not execution_id:
+            return BaseOutputSchema(
+                node_name=self.node_name,
+                success=False,
+                summary="execution_id が見つからないため処理を継続できません。",
+                reasoning="stateにexecution_idが存在しない。",
+                thought_process=["execution_id確認", "不足のため中断"],
+            )
 
         # ToolEnumからツールを選択
         try:
@@ -36,7 +46,7 @@ class ActionNode(BaseNode):
             )
 
         # ツールを実行
-        tool_result = tool_method()
+        tool_result = tool_method(execution_id)
 
         if not tool_result.success:
             return BaseOutputSchema(
@@ -54,8 +64,9 @@ class ActionNode(BaseNode):
                 # tool_result.dataをGenerateReplyResultSchemaに変換
                 reply_data = GenerateReplyResultSchema(**tool_result.data)
                 # プロセス内でアクセス可能なshared_canvasに保存
-                shared_canvas["generated_reply"] = reply_data.reply_text
-                shared_canvas["reply_reasoning"] = reply_data.reasoning
+                scoped_canvas = get_shared_canvas(execution_id)
+                scoped_canvas["generated_reply"] = reply_data.reply_text
+                scoped_canvas["reply_reasoning"] = reply_data.reasoning
             except Exception as e:
                 # GenerateReplyResultSchemaへの変換に失敗した場合
                 return BaseOutputSchema(

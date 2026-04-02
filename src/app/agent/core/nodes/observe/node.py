@@ -6,7 +6,7 @@ from app.agent.core.nodes.base_node import BaseNode
 from app.agent.core.nodes.observe.schema import ObserveOutputSchema
 from app.agent.core.schemas.base_output_schema import BaseOutputSchema
 from app.agent.core.schemas.state import ReactState
-from app.agent.core.utils.shared_store import shared_canvas
+from app.agent.core.utils.shared_store import get_shared_canvas
 
 
 class ObserveNode(BaseNode):
@@ -27,8 +27,10 @@ class ObserveNode(BaseNode):
         """
         fit_score・reply_quality_score と action_loop_count を確認し、判定を行う。
         """
-        fit_score = int(shared_canvas.get("fit_score", 0) or 0)
-        reply_quality_score = int(shared_canvas.get("reply_quality_score", 0) or 0)
+        execution_id = state.get("execution_id")
+        scoped_canvas = get_shared_canvas(execution_id)
+        fit_score = int(scoped_canvas.get("fit_score", 0) or 0)
+        reply_quality_score = int(scoped_canvas.get("reply_quality_score", 0) or 0)
         action_loop_count = state.get("action_loop_count", 0)
 
         if not state.get("observation_flg", False):
@@ -80,9 +82,11 @@ class ObserveNode(BaseNode):
     
     @override
     def canvas_update(self, node_result: BaseOutputSchema) -> None:
+        if not isinstance(node_result, ObserveOutputSchema):
+            return
+
         print("\n=== ObserveNode ===")
-        print(f"fit_score: {shared_canvas.get('fit_score', 0)}")
-        print(f"reply_quality_score: {shared_canvas.get('reply_quality_score', 0)}")
+        print(f"fit_score: {node_result.fit_score}")
         print(f"action_loop_count: {node_result.action_loop_count}")
         print(f"decision: {node_result.decision}")
         print(f"reasoning: {node_result.reasoning}")

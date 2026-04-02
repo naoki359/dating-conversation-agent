@@ -39,6 +39,8 @@ class ReactState(TypedDict, total=False):
 
     # ===== Trace =====
     trace_id: str
+    execution_id: str
+    user_id: str
 
     # ===== History =====
     history: list[BaseOutputSchema]  # ReActの検討履歴（各ノードの出力）

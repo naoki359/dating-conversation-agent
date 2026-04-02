@@ -5,7 +5,7 @@ from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.tools.generate_reply.schema import GenerateReplyResultSchema
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
-from app.agent.core.utils.shared_store import shared_store
+from app.agent.core.utils.shared_store import get_shared_store
 
 
 class GenerateReplyTool:
@@ -18,11 +18,12 @@ class GenerateReplyTool:
         self.llm = get_chat_model_gpt5_4()
         self.prompt = load_prompt_from_yaml(self._get_prompt_path())
 
-    def execute(self) -> BaseToolResult:
+    def execute(self, execution_id: str | None = None) -> BaseToolResult:
         """返信を生成する。"""
         # 必要なデータを取得
-        profile = shared_store.get("profile", {})
-        conversation = shared_store.get("conversation", {})
+        scoped_store = get_shared_store(execution_id)
+        profile = scoped_store.get("profile", {})
+        conversation = scoped_store.get("conversation", {})
         messages = conversation.get("messages", [])
 
         if not messages:
