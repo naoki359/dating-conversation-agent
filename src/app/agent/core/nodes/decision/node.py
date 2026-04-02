@@ -12,7 +12,7 @@ from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.config.settings import Settings
 from app.agent.core.nodes.action.tool_enum import ToolEnum
-from app.agent.core.utils.shared_store import shared_store
+from app.agent.core.utils.shared_store import get_shared_store
 
 
 class DecisionNode(BaseNode):
@@ -23,8 +23,9 @@ class DecisionNode(BaseNode):
         self.prompt = load_prompt_from_yaml(self._get_prompt_path())
 
     def execute(self, state: ReactState) -> DecisionOutputSchema:
-        profile_text = self._build_profile_text()
-        conversation_text = self._build_conversation_text()
+        execution_id = state.get("execution_id")
+        profile_text = self._build_profile_text(execution_id)
+        conversation_text = self._build_conversation_text(execution_id)
         history = self._build_past_thought_process_text(state)
         tools_info = self._build_tools_info()
 
@@ -63,8 +64,8 @@ class DecisionNode(BaseNode):
     def _get_prompt_path(self) -> Path:
         return Path(__file__).resolve().parent / "prompt.yaml"
 
-    def _build_profile_text(self) -> str:
-        profile = shared_store.get("profile", {})
+    def _build_profile_text(self, execution_id: str | None) -> str:
+        profile = get_shared_store(execution_id).get("profile", {})
 
         name = profile.get("name", "")
         age = profile.get("age", "")
@@ -85,8 +86,8 @@ class DecisionNode(BaseNode):
             """
         ).strip()
 
-    def _build_conversation_text(self) -> str:
-        conversation = shared_store.get("conversation", {})
+    def _build_conversation_text(self, execution_id: str | None) -> str:
+        conversation = get_shared_store(execution_id).get("conversation", {})
         messages = conversation.get("messages", [])
 
         if not messages:

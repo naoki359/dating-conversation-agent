@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
-import time
 
 from app.agent.core.config.settings import Settings
-from app.agent.core.schemas.state import ReactState, ReactState
+from app.agent.core.schemas.state import ReactState
 from app.agent.core.schemas.base_output_schema import BaseOutputSchema
-from app.agent.core.utils.shared_store import shared_store
+from app.agent.core.utils.shared_store import get_shared_store
 from app.agent.core.utils.json_logger import json_logger
 
 
@@ -123,7 +122,11 @@ class BaseNode(ABC):
         error_type: str | None = None,
         error_message: str | None = None,
     ) -> None:
-        user_id = shared_store.get("user_id")
+        execution_id = state_before.get("execution_id")
+        user_id = "unknown_user"
+        if execution_id:
+            user_id = str(get_shared_store(execution_id).get("user_id", "unknown_user"))
+
         trace_id = state_before["trace_id"]
 
         json_logger.save(

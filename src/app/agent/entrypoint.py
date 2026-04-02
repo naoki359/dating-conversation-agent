@@ -1,12 +1,16 @@
-from typing import List, Optional
+import uuid
+from typing import Optional
 from functools import lru_cache
 
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
 from app.agent.core.graph.build_graph import build_graph
-from app.agent.repositories.yaml_user_repository import load_agent_state
-from app.agent.core.utils.shared_store import shared_store, shared_canvas
+from app.agent.core.utils.shared_store import (
+    create_execution_bucket,
+    destroy_execution_bucket,
+    get_shared_canvas,
+)
 
 app = FastAPI(title="Dating Conversation Agent")
 
@@ -34,24 +38,24 @@ def health_check():
 @app.post("/reply", response_model=ReplyResponse)
 def generate_reply(request: ReplyRequest):
     print(f"{request.id}への返信を生成します")
-    # shared_storeにuser_idを設定
-    shared_store["user_id"] = request.id
+    execution_id = str(uuid.uuid4())
+    create_execution_bucket(execution_id, user_id=request.id)
 
     graph = get_graph()
 
-    # 仮：固定IDで読み込み
-    # state = load_agent_state(request.id)
+    try:
+        graph.invoke(
+            {
+                "user_id": request.id,
+                "execution_id": execution_id,
+            },
+            config={"recursion_limit": 100},
+        )
 
-    # print("Loaded AgentState:", state)
-
-    result = graph.invoke({"user_id": request.id}, config={"recursion_limit": 100})
-
-    # # テスト用：最終的なstateの情報を出力
-    # print("Final State:", result["history"])
-    # print("")
-    # print("Shared Store:", shared_store)
-
-    return ReplyResponse(
-        generated_reply=shared_canvas["generated_reply"],
-        reply_reasoning=shared_canvas["reply_reasoning"],
-    )
+        canvas = get_shared_canvas(execution_id)
+        return ReplyResponse(
+            generated_reply=str(canvas.get("generated_reply", "")),
+            reply_reasoning=str(canvas.get("reply_reasoning", "")),
+        )
+    finally:
+        destroy_execution_bucket(execution_id)

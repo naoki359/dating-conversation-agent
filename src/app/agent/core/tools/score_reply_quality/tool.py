@@ -6,7 +6,7 @@ from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.tools.score_reply_quality.schema import ScoreReplyQualityResultSchema
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
-from app.agent.core.utils.shared_store import shared_canvas, shared_store
+from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
 
 class ScoreReplyQualityTool:
@@ -38,10 +38,12 @@ class ScoreReplyQualityTool:
         self.llm = get_chat_model_gpt5_4()
         self.prompt = load_prompt_from_yaml(self._get_prompt_path())
 
-    def execute(self) -> BaseToolResult:
-        reply_text = str(shared_canvas.get("generated_reply", "")).strip()
-        profile = shared_store.get("profile", {})
-        conversation = shared_store.get("conversation", {})
+    def execute(self, execution_id: str | None = None) -> BaseToolResult:
+        scoped_store = get_shared_store(execution_id)
+        scoped_canvas = get_shared_canvas(execution_id)
+        reply_text = str(scoped_canvas.get("generated_reply", "")).strip()
+        profile = scoped_store.get("profile", {})
+        conversation = scoped_store.get("conversation", {})
 
         if not reply_text:
             return BaseToolResult(
@@ -94,7 +96,7 @@ class ScoreReplyQualityTool:
             output["reasons"] = self._dedupe_list(reasons)
             output["improvement_suggestions"] = self._dedupe_list(improvement_suggestions)
 
-            existing_suggestions = shared_canvas.get("improvement_suggestions", [])
+            existing_suggestions = scoped_canvas.get("improvement_suggestions", [])
             if isinstance(existing_suggestions, list):
                 merged_suggestions = existing_suggestions + output["improvement_suggestions"]
             elif isinstance(existing_suggestions, str) and existing_suggestions.strip():
@@ -102,10 +104,10 @@ class ScoreReplyQualityTool:
             else:
                 merged_suggestions = list(output["improvement_suggestions"])
 
-            shared_canvas["improvement_suggestions"] = self._dedupe_list(merged_suggestions)
-            shared_canvas["reply_quality_score"] = final_score
-            shared_canvas["reply_should_regenerate"] = should_regenerate
-            shared_canvas["reply_quality_reasons"] = output["reasons"]
+            scoped_canvas["improvement_suggestions"] = self._dedupe_list(merged_suggestions)
+            scoped_canvas["reply_quality_score"] = final_score
+            scoped_canvas["reply_should_regenerate"] = should_regenerate
+            scoped_canvas["reply_quality_reasons"] = output["reasons"]
 
             return BaseToolResult(
                 tool_name=self.name,
