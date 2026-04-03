@@ -2,8 +2,6 @@ from app.agent.core.nodes.base_node import BaseNode
 from app.agent.core.schemas.base_output_schema import BaseOutputSchema
 from app.agent.core.schemas.state import ReactState
 from app.agent.core.nodes.action.tool_enum import ToolEnum
-from app.agent.core.tools.generate_reply.schema import GenerateReplyResultSchema
-from app.agent.core.utils.shared_store import get_shared_canvas
 
 
 class ActionNode(BaseNode):
@@ -56,26 +54,6 @@ class ActionNode(BaseNode):
                 reasoning="ツールの実行に失敗。",
                 thought_process=[f"{selected_tool.name} 実行", F"実行失敗。原因: {tool_result.summary}"],
             )
-
-        # ツールの実行結果を基にCanvasDataを生成
-        # ツールの実行結果がsuccess且つ、戻り値がGenerateReplyResultSchemaの形式であれば、生成された返信文をCanvasに含める
-        if tool_result.success and selected_tool == ToolEnum.GENERATE_REPLY:
-            try:
-                # tool_result.dataをGenerateReplyResultSchemaに変換
-                reply_data = GenerateReplyResultSchema(**tool_result.data)
-                # プロセス内でアクセス可能なshared_canvasに保存
-                scoped_canvas = get_shared_canvas(execution_id)
-                scoped_canvas["generated_reply"] = reply_data.reply_text
-                scoped_canvas["reply_reasoning"] = reply_data.reasoning
-            except Exception as e:
-                # GenerateReplyResultSchemaへの変換に失敗した場合
-                return BaseOutputSchema(
-                    node_name=self.node_name,
-                    success=False,
-                    summary=f"返信データの処理に失敗しました: {str(e)}",
-                    reasoning="GenerateReplyResultSchemaへの変換でエラーが発生。",
-                    thought_process=["ツール実行", "結果の解析失敗"],
-                )
             
         # 実行したツールがCHECK_REPLY_PROFILE_FITまたはSCORE_REPLY_QUALITYであれば、観測フラグを立てる
         if selected_tool in [ToolEnum.CHECK_REPLY_PROFILE_FIT, ToolEnum.SCORE_REPLY_QUALITY] and tool_result.success:
