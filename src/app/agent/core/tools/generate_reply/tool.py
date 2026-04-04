@@ -5,7 +5,7 @@ from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.tools.generate_reply.schema import GenerateReplyResultSchema
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
-from app.agent.core.utils.shared_store import get_shared_store
+from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
 
 class GenerateReplyTool:
@@ -70,11 +70,24 @@ class GenerateReplyTool:
             structured_llm = self.llm.with_structured_output(GenerateReplyResultSchema)
             result = structured_llm.invoke(prompt_value)
 
+            try:
+                reply_data = GenerateReplyResultSchema.model_validate(result)
+                scoped_canvas = get_shared_canvas(execution_id)
+                scoped_canvas["generated_reply"] = reply_data.reply_text
+                scoped_canvas["reply_reasoning"] = reply_data.reasoning
+            except Exception as e:
+                return BaseToolResult(
+                    tool_name=self.name,
+                    success=False,
+                    summary=f"返信データの処理に失敗しました: {str(e)}",
+                    data={},
+                )
+
             return BaseToolResult(
                 tool_name=self.name,
                 success=True,
                 summary="返信を生成しました。",
-                data=result.model_dump(),
+                data=reply_data.model_dump(),
             )
         except Exception as e:
             return BaseToolResult(
