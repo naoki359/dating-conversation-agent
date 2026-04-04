@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from app.agent.core.config.settings import Settings
+from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
 
 class JsonLogger:
@@ -52,6 +53,11 @@ class JsonLogger:
             if key not in common_keys
         }
 
+        execution_id = self._extract_execution_id(
+            state_before=state_before,
+            state_after=state_after,
+        )
+
         payload = {
             "meta": {
                 "timestamp": now.isoformat(),
@@ -68,14 +74,15 @@ class JsonLogger:
                 ),
                 "state_summary": self._extract_state_summary(state_before),
             },
-            "summary": output.get("summary"),
-            "reasoning": output.get("reasoning"),
-            "thought_process": output.get("thought_process"),
+            "base_data": {
+                "summary": output.get("summary"),
+                "reasoning": output.get("reasoning"),
+                "thought_process": output.get("thought_process"),
+            },
             "node_data": node_data,
-            "output": {
-                "generated_reply": state_after.get("generated_reply"),
-                "reply_reasoning": state_after.get("reply_reasoning"),
-                "is_finished": state_after.get("is_finished"),
+            "shared_store": {
+                "canvas": dict(get_shared_canvas(execution_id)),
+                "sourceData": dict(get_shared_store(execution_id)),
             },
             "error": None
             if not error_type
@@ -87,6 +94,21 @@ class JsonLogger:
 
         with log_path.open("w", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False, indent=2, default=str)
+
+    def _extract_execution_id(
+        self,
+        *,
+        state_before: dict[str, Any],
+        state_after: dict[str, Any],
+    ) -> str | None:
+        execution_id = state_after.get("execution_id")
+        if execution_id is None:
+            execution_id = state_before.get("execution_id")
+
+        if execution_id is None:
+            return None
+
+        return str(execution_id)
 
     def _extract_profile_summary(self, state: dict[str, Any]) -> str | None:
         profile = state.get("profile") or {}
