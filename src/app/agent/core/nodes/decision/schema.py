@@ -20,14 +20,6 @@ class DecisionOutputSchema(BaseOutputSchema):
         ),
     )
 
-    required_tasks: list[str] = Field(
-        default_factory=list,
-        description=(
-            "現在の状況に対して必要だと考えられるタスク一覧。"
-            "今すぐ実行しない候補も含めて広めに洗い出す。"
-        ),
-    )
-
     decided_action: DecidedActionLiteral = Field(
         ...,
         description=(
