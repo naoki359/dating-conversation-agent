@@ -54,9 +54,8 @@ class DecisionNode(BaseNode):
         updated_state = {
             **state,
             "current_thought": node_result.current_thought,
-            "required_tasks": node_result.required_tasks,
             "decided_action": node_result.decided_action,
-            "action_reasoning": node_result.reasoning
+            # "action_reasoning": node_result.reasoning
         }
 
         return updated_state

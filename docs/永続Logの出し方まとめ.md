@@ -48,7 +48,6 @@ base node にログを出力する処理を実装する
     "conversation_tail": [],
     "state_summary": {
       "current_thought": null,
-      "required_tasks": null,
       "decided_action": null,
       "generated_reply": null,
       "is_finished": null

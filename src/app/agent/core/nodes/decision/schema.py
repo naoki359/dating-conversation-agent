@@ -23,7 +23,7 @@ class DecisionOutputSchema(BaseOutputSchema):
     decided_action: DecidedActionLiteral = Field(
         ...,
         description=(
-            "required_tasks の中から、今回このステップで実際に実行すると判断したタスク。"
+            "、今回このステップで実際に実行すると判断したタスク。"
             f"利用可能なツール: {', '.join(TOOL_NAMES)}"
         ),
     )
