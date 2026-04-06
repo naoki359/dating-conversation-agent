@@ -1,4 +1,5 @@
 from app.agent.core.nodes.base_node import BaseNode
+from app.agent.core.nodes.action.schema import ActionOutputSchema
 from app.agent.core.schemas.base_output_schema import BaseOutputSchema
 from app.agent.core.schemas.state import ReactState
 from app.agent.core.nodes.action.tool_enum import ToolEnum
@@ -16,17 +17,20 @@ class ActionNode(BaseNode):
 
     node_name = "action_node"
 
-    def execute(self, state: ReactState) -> BaseOutputSchema:
+    def execute(self, state: ReactState) -> ActionOutputSchema:
         decided_action = state.get("decided_action", "")
         execution_id = state.get("execution_id")
 
         if not execution_id:
-            return BaseOutputSchema(
+            return ActionOutputSchema(
                 node_name=self.node_name,
                 success=False,
                 summary="execution_id が見つからないため処理を継続できません。",
                 reasoning="stateにexecution_idが存在しない。",
                 thought_process=["execution_id確認", "不足のため中断"],
+                selected_tool="",
+                tool_result={},
+                is_finished=False,
             )
 
         # ToolEnumからツールを選択
@@ -35,24 +39,30 @@ class ActionNode(BaseNode):
             tool_method = selected_tool.method
         except KeyError:
             # ツールが見つからない場合のエラーハンドリング
-            return BaseOutputSchema(
+            return ActionOutputSchema(
                 node_name=self.node_name,
                 success=False,
                 summary=f"指定されたツール '{decided_action}' が見つかりません。",
                 reasoning="decided_actionが無効です。",
                 thought_process=["ツール選択", "ツールが見つからない"],
+                selected_tool=decided_action.upper().replace(" ", "_"),
+                tool_result={},
+                is_finished=False,
             )
 
         # ツールを実行
         tool_result = tool_method(execution_id)
 
         if not tool_result.success:
-            return BaseOutputSchema(
+            return ActionOutputSchema(
                 node_name=self.node_name,
                 success=False,
                 summary=f"{selected_tool.name} の実行に失敗しました。原因：{tool_result.summary}",
                 reasoning="ツールの実行に失敗。",
                 thought_process=[f"{selected_tool.name} 実行", F"実行失敗。原因: {tool_result.summary}"],
+                selected_tool=selected_tool.name,
+                tool_result=tool_result.model_dump() if hasattr(tool_result, "model_dump") else tool_result,
+                is_finished=False,
             )
             
         # 実行したツールがEVALUATE_REPLYであれば、観測フラグを立てる
@@ -61,26 +71,27 @@ class ActionNode(BaseNode):
         else:
             state["observation_flg"] = False
 
-        return BaseOutputSchema(
+        return ActionOutputSchema(
             node_name=self.node_name,
             success=tool_result.success,
             summary=f"{selected_tool.name} を実行しました。{selected_tool.completion_state}" if tool_result.success else f"{selected_tool.name} の実行に失敗しました。状況を確認したのち再度実行してください。",
             reasoning="Decisionに基づきツールを選択。",
-            thought_process=[]
+            thought_process=[],
+            selected_tool=selected_tool.name,
+            tool_result=tool_result.model_dump() if hasattr(tool_result, "model_dump") else tool_result,
+            is_finished=False,
         )
 
     def update_state(self, node_result: BaseOutputSchema, state: ReactState) -> ReactState:
-        action_loop_count = state.get("action_loop_count", 0) + 1
-        decided_action = state.get("decided_action", "")
+        assert isinstance(node_result, ActionOutputSchema)
 
-        # selected_toolをツール名から取得
-        selected_tool_name = decided_action.upper().replace(" ", "_")
+        action_loop_count = state.get("action_loop_count", 0) + 1
 
         return {
             **state,
             "action_loop_count": action_loop_count,
-            "selected_tool": selected_tool_name,
-            "tool_result": node_result.model_dump() if node_result else {},
+            "selected_tool": node_result.selected_tool,
+            "tool_result": node_result.tool_result,
         }
 
     def console_render(self, result: BaseOutputSchema):
