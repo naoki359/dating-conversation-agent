@@ -55,8 +55,8 @@ class ActionNode(BaseNode):
                 thought_process=[f"{selected_tool.name} 実行", F"実行失敗。原因: {tool_result.summary}"],
             )
             
-        # 実行したツールがCHECK_REPLY_PROFILE_FITまたはSCORE_REPLY_QUALITYであれば、観測フラグを立てる
-        if selected_tool in [ToolEnum.CHECK_REPLY_PROFILE_FIT, ToolEnum.SCORE_REPLY_QUALITY] and tool_result.success:
+        # 実行したツールがEVALUATE_REPLYであれば、観測フラグを立てる
+        if selected_tool == ToolEnum.EVALUATE_REPLY and tool_result.success:
             state["observation_flg"] = True
         else:
             state["observation_flg"] = False
