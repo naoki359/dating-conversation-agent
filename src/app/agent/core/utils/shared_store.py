@@ -92,6 +92,19 @@ DEFAULT_SELF_PROFILE: Profile = {
 
 
 # ============================================
+# ConversationFacts: 会話から抽出した重要情報
+# ============================================
+class ConversationFact(TypedDict, total=False):
+    value: str
+    confidence: Literal["low", "medium", "high"]
+    source_quote: str
+
+
+class ConversationFacts(TypedDict, total=False):
+    meeting_area: ConversationFact | None
+
+
+# ============================================
 # Canvas: プロセス内で更新される成果物
 # ============================================
 class Canvas(TypedDict, total=False):
@@ -125,6 +138,11 @@ class Canvas(TypedDict, total=False):
     reply_should_regenerate: bool
     reply_quality_reasons: list[str]
     # reply_check_result: dict[str, Any]
+
+    # -----------------------------------
+    # 会話から抽出した重要情報
+    # -----------------------------------
+    conversation_facts: ConversationFacts
 
 
 @dataclass

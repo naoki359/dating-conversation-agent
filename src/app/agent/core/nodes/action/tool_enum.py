@@ -1,6 +1,6 @@
 from enum import Enum
 
-from app.agent.core.tools.get_history.tool import GetHistoryTool
+from app.agent.core.tools.get_history_and_facts.tool import GetHistoryAndFactsTool
 from app.agent.core.tools.generate_reply.tool import GenerateReplyTool
 from app.agent.core.tools.evaluate_reply.tool import EvaluateReplyTool
 from app.agent.core.tools.refine_reply.tool import RefineReplyTool
@@ -12,10 +12,10 @@ class ToolEnum(Enum):
     """
 
     # 値: (メソッド, 説明, 実行完了後の状態テキスト)
-    GET_HISTORY = (
-        GetHistoryTool().execute,
-        "相手のプロフィールと会話履歴を取得する",
-        "shared_store に profile と conversation が保存され、履歴参照が可能な状態になる"
+    GET_HISTORY_AND_FACTS = (
+        GetHistoryAndFactsTool().execute,
+        "相手のプロフィールと会話履歴を取得し、住んでいる地域などの重要な情報を抽出する",
+        "shared_store に profile と conversation が保存され、canvas に conversation_facts が展開された状態になる"
     )
 
     GENERATE_REPLY = (
