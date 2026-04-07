@@ -1,8 +1,8 @@
 from pydantic import BaseModel, Field
 
 
-class RefineReplyResultSchema(BaseModel):
-    """指摘事項を踏まえて修正した返信案。"""
+class RefineReplyStructuredOutputSchema(BaseModel):
+    """LLM structured output schema for reply refinement."""
 
     refined_reply: str = Field(
         description="指摘事項を反映した修正版の返信文。",
