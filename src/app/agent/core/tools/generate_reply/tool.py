@@ -31,7 +31,7 @@ class GenerateReplyTool:
                 tool_name=self.name,
                 success=False,
                 summary="会話履歴が見つかりません。",
-                data={},
+                tool_result={},
             )
 
         # 最新のメッセージ（相手からのメッセージ）を取得
@@ -46,7 +46,7 @@ class GenerateReplyTool:
                 tool_name=self.name,
                 success=False,
                 summary="相手からのメッセージが見つかりません。",
-                data={},
+                tool_result={},
             )
 
         # プロンプト用のテキストを構築
@@ -80,21 +80,21 @@ class GenerateReplyTool:
                     tool_name=self.name,
                     success=False,
                     summary=f"返信データの処理に失敗しました: {str(e)}",
-                    data={},
+                    tool_result={},
                 )
 
             return BaseToolResult(
                 tool_name=self.name,
                 success=True,
                 summary="返信を生成しました。",
-                data=reply_data.model_dump(),
+                tool_result=reply_data.model_dump(),
             )
         except Exception as e:
             return BaseToolResult(
                 tool_name=self.name,
                 success=False,
                 summary=f"返信生成中にエラーが発生しました: {str(e)}",
-                data={},
+                tool_result={},
             )
 
     def _get_prompt_path(self) -> Path:

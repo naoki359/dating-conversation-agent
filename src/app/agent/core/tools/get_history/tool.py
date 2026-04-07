@@ -18,7 +18,7 @@ class GetHistoryTool():
                 tool_name=self.name,
                 success=False,
                 summary="ユーザーIDが指定されていません。",
-                data={},
+                tool_result={},
             )
 
         file_path = Path("data/test_user") / f"{user_id}.yaml"
@@ -49,5 +49,5 @@ class GetHistoryTool():
             tool_name=self.name,
             success=True,
             summary="履歴を取得しました。",
-            data=result.model_dump(),
+            tool_result=result.model_dump(),
         )

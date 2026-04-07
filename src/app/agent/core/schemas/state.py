@@ -21,9 +21,6 @@ class ReactState(TypedDict, total=False):
     # ===== Thought =====
     current_thought: str
 
-    # ===== Task Discovery =====
-    required_tasks: list[str]
-
     # ===== Decision =====
     decided_action: str
     action_reasoning: str

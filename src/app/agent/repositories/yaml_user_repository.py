@@ -96,9 +96,7 @@ def _build_initial_state(data: dict[str, Any]) -> ReactState:
         },
         # ===== ReAct 初期値 =====
         "current_thought": "",
-        "required_tasks": [],
         "decided_action": "",
-        "action_reasoning": "",
         "generated_reply": "",
         "reply_reasoning": "",
         "is_finished": False,

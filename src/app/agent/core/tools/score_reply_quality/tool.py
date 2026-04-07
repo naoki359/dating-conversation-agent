@@ -50,7 +50,7 @@ class ScoreReplyQualityTool:
                 tool_name=self.name,
                 success=False,
                 summary="評価対象の返信文が見つかりません。",
-                data={},
+                tool_result={},
             )
 
         messages = conversation.get("messages", []) if isinstance(conversation, dict) else []
@@ -113,14 +113,14 @@ class ScoreReplyQualityTool:
                 tool_name=self.name,
                 success=True,
                 summary="返信品質スコアを評価しました。" if not should_regenerate else "返信品質スコアを評価し、再作成が必要と判定しました。",
-                data=output,
+                tool_result=output,
             )
         except Exception as exc:
             return BaseToolResult(
                 tool_name=self.name,
                 success=False,
                 summary=f"返信品質スコア評価中にエラーが発生しました: {str(exc)}",
-                data={},
+                tool_result={},
             )
 
     def _get_prompt_path(self) -> Path:

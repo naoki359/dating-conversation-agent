@@ -4,7 +4,7 @@ from typing import Any
 
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
-from app.agent.core.tools.refine_reply.schema import RefineReplyResultSchema
+from app.agent.core.tools.refine_reply.schema import RefineReplyStructuredOutputSchema
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
@@ -33,7 +33,7 @@ class RefineReplyTool:
                 tool_name=self.name,
                 success=False,
                 summary="修正対象の返信案が見つかりません。",
-                data={},
+                tool_result={},
             )
 
         feedback_items = self._collect_feedback(scoped_canvas)
@@ -51,7 +51,7 @@ class RefineReplyTool:
                 }
             )
 
-            structured_llm = self.llm.with_structured_output(RefineReplyResultSchema)
+            structured_llm = self.llm.with_structured_output(RefineReplyStructuredOutputSchema)
             result = structured_llm.invoke(prompt_value)
 
             scoped_canvas["generated_reply"] = result.refined_reply
@@ -61,14 +61,14 @@ class RefineReplyTool:
                 tool_name=self.name,
                 success=True,
                 summary="指摘事項を基に返信案を修正しました。",
-                data=result.model_dump(),
+                tool_result=result.model_dump(),
             )
         except Exception as exc:
             return BaseToolResult(
                 tool_name=self.name,
                 success=False,
                 summary=f"返信修正中にエラーが発生しました: {str(exc)}",
-                data={},
+                tool_result={},
             )
 
     def _get_prompt_path(self) -> Path:

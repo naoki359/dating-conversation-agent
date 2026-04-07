@@ -20,7 +20,7 @@ class EvaluateReplyTool:
                 tool_name=self.name,
                 success=False,
                 summary=f"返信品質の評価に失敗しました: {score_result.summary}",
-                data={
+                tool_result={
                     "score_reply_quality": score_result.model_dump(),
                 },
             )
@@ -31,7 +31,7 @@ class EvaluateReplyTool:
                 tool_name=self.name,
                 success=False,
                 summary=f"プロフィール適合度の評価に失敗しました: {fit_result.summary}",
-                data={
+                tool_result={
                     "score_reply_quality": score_result.model_dump(),
                     "check_reply_profile_fit": fit_result.model_dump(),
                 },
@@ -41,8 +41,8 @@ class EvaluateReplyTool:
             tool_name=self.name,
             success=True,
             summary="返信品質とプロフィール適合度を評価しました。",
-            data={
-                "score_reply_quality": score_result.data,
-                "check_reply_profile_fit": fit_result.data,
+            tool_result={
+                "score_reply_quality": score_result.tool_result,
+                "check_reply_profile_fit": fit_result.tool_result,
             },
         )

@@ -19,7 +19,7 @@ class BaseToolResult(BaseModel):
         description="ツール実行結果の短い要約。",
     )
 
-    data: dict[str, Any] = Field(
+    tool_result: dict[str, Any] = Field(
         default_factory=dict,
         description="ツール固有の実行結果。tools/xxx/schema.py の内容を dict 化して保持する。",
     )

@@ -156,7 +156,6 @@ class JsonLogger:
     def _extract_state_summary(self, state: dict[str, Any]) -> dict[str, Any]:
         return {
             "current_thought": state.get("current_thought"),
-            "required_tasks": state.get("required_tasks"),
             "decided_action": state.get("decided_action"),
             "generated_reply": state.get("generated_reply"),
             "is_finished": state.get("is_finished"),

@@ -30,7 +30,7 @@ class CheckReplyProfileFitTool:
                 tool_name=self.name,
                 success=False,
                 summary="プロフィール情報が見つかりません。",
-                data={},
+                tool_result={},
             )
 
         if not reply_text:
@@ -38,7 +38,7 @@ class CheckReplyProfileFitTool:
                 tool_name=self.name,
                 success=False,
                 summary="評価対象の返信文が見つかりません。",
-                data={},
+                tool_result={},
             )
 
         try:
@@ -73,14 +73,14 @@ class CheckReplyProfileFitTool:
                 tool_name=self.name,
                 success=True,
                 summary="返信文のプロフィール適合度を評価しました。",
-                data=result.model_dump(),
+                tool_result=result.model_dump(),
             )
         except Exception as exc:
             return BaseToolResult(
                 tool_name=self.name,
                 success=False,
                 summary=f"適合度チェック中にエラーが発生しました: {str(exc)}",
-                data={},
+                tool_result={},
             )
 
     def _get_prompt_path(self) -> Path:
