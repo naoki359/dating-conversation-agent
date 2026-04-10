@@ -28,13 +28,14 @@ class GenerateReplyTool:
         messages = conversation.get("messages", [])
         conversation_facts = scoped_canvas.get("conversation_facts", {})
 
-        if not messages:
-            return BaseToolResult(
-                tool_name=self.name,
-                success=False,
-                summary="会話履歴が見つかりません。",
-                tool_result={},
-            )
+        # 初回メッセージ作成時は空になるため、コメントアウト
+        # if not messages:
+        #     return BaseToolResult(
+        #         tool_name=self.name,
+        #         success=False,
+        #         summary="会話履歴が見つかりません。",
+        #         tool_result={},
+        #     )
 
         # 最新のメッセージ（相手からのメッセージ）を取得
         latest_message = None
@@ -43,20 +44,21 @@ class GenerateReplyTool:
                 latest_message = msg
                 break
 
-        if not latest_message:
-            return BaseToolResult(
-                tool_name=self.name,
-                success=False,
-                summary="相手からのメッセージが見つかりません。",
-                tool_result={},
-            )
+        # 初回メッセージ作成時は空になるため、コメントアウト
+        # if not latest_message:
+        #     return BaseToolResult(
+        #         tool_name=self.name,
+        #         success=False,
+        #         summary="相手からのメッセージが見つかりません。",
+        #         tool_result={},
+        #     )
 
         # プロンプト用のテキストを構築
         profile_text = self._build_profile_text(profile)
         conversation_text = self._build_conversation_text(messages)
         conversation_facts_text = self._build_conversation_facts_text(conversation_facts)
         fact_collection_guidance = self._build_fact_collection_guidance(conversation_facts)
-        latest_message_text = latest_message.get("message", "")
+        latest_message_text = latest_message.get("message", "") if latest_message else "最新のメッセージはありません。これから作るものが初回メッセージです。"
 
         print("=== プロンプト用テキスト（会話履歴） ===")
         print(fact_collection_guidance)

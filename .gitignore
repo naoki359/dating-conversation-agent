@@ -19,7 +19,10 @@ wheels/
 logs/
 
 # data
-/user
+/data/user
 
 # docs
 /docs/issues
+
+# Requests
+/requests/pro_create.rest

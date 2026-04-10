@@ -1,6 +1,6 @@
-from pathlib import Path
 import yaml
 
+from app.agent.core.config.settings import Settings
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.tools.get_history.schema import GetHistoryResultSchema
 from app.agent.core.utils.shared_store import get_shared_store
@@ -21,18 +21,18 @@ class GetHistoryTool():
                 tool_result={},
             )
 
-        file_path = Path("data/test_user") / f"{user_id}.yaml"
+        file_path = Settings.get_data_dir() / f"{user_id}.yaml"
+
+        print(f"GetHistoryTool: Loading history from {file_path}")
+
         if not file_path.exists():
-            # 初回の会話
-            profile = {}
-            conversation = []
-            updated_at = ""
-        else:
-            with open(file_path, "r", encoding="utf-8") as f:
-                data = yaml.safe_load(f)
-            profile = data.get("profile", {})
-            conversation = data.get("conversation", {}).get("messages", [])
-            updated_at = data.get("conversation", {}).get("updated_at", "")
+            raise FileNotFoundError(f"ユーザーデータが見つかりません: {file_path}")
+
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        profile = data.get("profile", {})
+        conversation = data.get("conversation", {}).get("messages", [])
+        updated_at = data.get("conversation", {}).get("updated_at", "")
 
         scoped_store["profile"] = profile
         scoped_store["conversation"] = {
