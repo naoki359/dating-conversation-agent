@@ -44,13 +44,14 @@ class GenerateReplyTool:
                 latest_message = msg
                 break
 
-        if not latest_message:
-            return BaseToolResult(
-                tool_name=self.name,
-                success=False,
-                summary="相手からのメッセージが見つかりません。",
-                tool_result={},
-            )
+        # 初回メッセージ作成時は空になるため、コメントアウト
+        # if not latest_message:
+        #     return BaseToolResult(
+        #         tool_name=self.name,
+        #         success=False,
+        #         summary="相手からのメッセージが見つかりません。",
+        #         tool_result={},
+        #     )
 
         # プロンプト用のテキストを構築
         profile_text = self._build_profile_text(profile)
