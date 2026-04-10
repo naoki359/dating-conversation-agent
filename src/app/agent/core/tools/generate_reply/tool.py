@@ -22,9 +22,11 @@ class GenerateReplyTool:
         """返信を生成する。"""
         # 必要なデータを取得
         scoped_store = get_shared_store(execution_id)
+        scoped_canvas = get_shared_canvas(execution_id)
         profile = scoped_store.get("profile", {})
         conversation = scoped_store.get("conversation", {})
         messages = conversation.get("messages", [])
+        conversation_facts = scoped_canvas.get("conversation_facts", {})
 
         if not messages:
             return BaseToolResult(
@@ -52,10 +54,12 @@ class GenerateReplyTool:
         # プロンプト用のテキストを構築
         profile_text = self._build_profile_text(profile)
         conversation_text = self._build_conversation_text(messages)
+        conversation_facts_text = self._build_conversation_facts_text(conversation_facts)
+        fact_collection_guidance = self._build_fact_collection_guidance(conversation_facts)
         latest_message_text = latest_message.get("message", "")
 
-        # print("=== プロンプト用テキスト（会話履歴） ===")
-        # print(conversation_text)
+        print("=== プロンプト用テキスト（会話履歴） ===")
+        print(fact_collection_guidance)
 
         try:
             # LLMに構造化出力を指定
@@ -63,6 +67,8 @@ class GenerateReplyTool:
                 {
                     "profile_text": profile_text,
                     "conversation_text": conversation_text,
+                    "conversation_facts_text": conversation_facts_text,
+                    "fact_collection_guidance": fact_collection_guidance,
                     "latest_message": latest_message_text,
                 }
             )
@@ -131,3 +137,38 @@ class GenerateReplyTool:
             lines.append(f"{sender_label}: {message}")
 
         return "\n".join(lines)
+
+    def _build_conversation_facts_text(self, conversation_facts: dict) -> str:
+        """抽出済みの重要情報テキストを構築。"""
+        if not conversation_facts:
+            return "抽出済み情報はありません。"
+
+        meeting_area = conversation_facts.get("meeting_area")
+        if not meeting_area:
+            return "meeting_area: 未取得"
+
+        value = meeting_area.get("value", "")
+        confidence = meeting_area.get("confidence", "")
+        source_quote = meeting_area.get("source_quote", "")
+        return dedent(
+            f"""
+            meeting_area: {value or '未取得'}
+            confidence: {confidence or 'unknown'}
+            source_quote: {source_quote or 'なし'}
+            """
+        ).strip()
+
+    def _build_fact_collection_guidance(self, conversation_facts: dict) -> str:
+        """情報取得の優先度に関するガイダンスを構築。"""
+        meeting_area = conversation_facts.get("meeting_area") if conversation_facts else None
+        if not meeting_area or not meeting_area.get("value"):
+            return (
+                "meeting_area が未取得です。"
+                "自然な流れを崩さず、次の会話で会いやすいエリアを聞き出せる返信を優先してください。"
+                "デート提案は meeting_area 取得後に行ってください。"
+            )
+
+        return (
+            "meeting_area は取得済みです。"
+            "会話フェーズに応じて、自然なタイミングでデート提案を検討できます。"
+        )

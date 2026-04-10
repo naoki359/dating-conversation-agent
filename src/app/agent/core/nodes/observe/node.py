@@ -40,7 +40,7 @@ class ObserveNode(BaseNode):
                 summary="評価未実施のため、ループを継続します。",
                 fit_score=None,
                 action_loop_count=action_loop_count,
-                decision="continue",
+                decision="continue" if action_loop_count <= self.MAX_ACTION_LOOP_COUNT else "end",
                 reasoning="評価がまだ行われていない為、終了条件を満たしていない",
             )
 

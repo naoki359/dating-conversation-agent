@@ -64,7 +64,7 @@ Content-Type: application/json
   "id": "with_0008"
 }
 
-### さらに会話が長い
+### 勤務地が新宿
 POST {{baseUrl}}/reply
 Content-Type: application/json
 

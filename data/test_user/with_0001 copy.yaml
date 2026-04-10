@@ -1,4 +1,4 @@
-user_id: with_0003
+user_id: with_0001
 
 profile:
   name: さやか
@@ -14,21 +14,25 @@ profile:
     特にサスペンス系とか、ちょっと考えさせられる作品が好きです。
 
     よろしくお願いします✨
-  profile_summary: 映画好き、カフェ巡り、落ち着いた性格
+
+  profile_summary: 映画好き（特に韓国映画・サスペンス）。カフェ巡り。落ち着いた性格。
 
 conversation:
   messages:
     - id: m001
-      timestamp: 2026-03-21T20:00:00+09:00
+      timestamp: 2026-03-21T19:00:00+09:00
       sender: self
       message: |
         はじめまして！
-        プロフィール見て気になりました😊
+        プロフィール見て気になりました。
+      reasoning: 初回の挨拶とプロフィールに対する興味を示す内容で、相手に好印象を与えるため。
+      created_by: agent/自分で微修正/自分ですべて修正
+      action: 質問 / 共感 / 自己開示 / 誘い
 
     - id: m002
-      timestamp: 2026-03-21T20:10:00+09:00
+      timestamp: 2026-03-21T19:03:00+09:00
       sender: other
       message: |
-        ありがとうございます！
+        ありがとうございます、うれしいです☺️
 
-  updated_at: 2026-03-21T20:10:00+09:00
+  result: デート/既読無視/断られる/電話から
