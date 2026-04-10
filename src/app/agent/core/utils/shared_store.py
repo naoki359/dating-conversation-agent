@@ -64,28 +64,15 @@ DEFAULT_SELF_PROFILE: Profile = {
         - name: 角田 直樹
         - age: 32
 
-        [personality]
-        - 落ち着いている
-        - やや人見知り
-        - 聞き役になることが多い
-                               
-        [communication_style]
-        - 礼儀正しい
-        - 丁寧な言葉遣い
-        - 柔らかい
-        - テンション高すぎない
-        - 基本的には相手の話を聞く
-                               
-        [message_length]
-        - 短すぎず、長すぎない（2～4文）
-                               
-        [emoji_usage]
-        - 1つの返信に対して2つまで
-                               
         [interests]
         - アニメ/漫画/ゲーム
-        - サウナ
-        - 旅行
+        - サウナ/温泉
+        - 水族館
+        - 猫/犬
+        - ポケモン/ソウルシリーズ
+        - 居酒屋/日本酒/ビール
+        - 焼肉/寿司/肉寿司
+        - Vtuber/配信者
     """).strip(),
     "profile_summary": ""
 }
