@@ -216,6 +216,34 @@ Re-Generate
 
 ---
 
+## ⚙️ Environment Configuration
+
+### DATA_SOURCE（データ参照先の切り替え）
+
+`.env` の `DATA_SOURCE` でユーザーデータの参照先を切り替えられます。
+
+| 値 | 参照ディレクトリ | 用途 |
+|----|-----------------|------|
+| `test`（デフォルト） | `data/test_user/` | 開発・テスト用 |
+| `prod` | `data/user/` | 本番運用 |
+
+#### 設定例
+
+```env
+# テストデータを使用（デフォルト）
+DATA_SOURCE=test
+
+# 本番データを使用
+DATA_SOURCE=prod
+```
+
+#### 注意事項
+
+- 未設定時は `test` がデフォルトとして適用されます。
+- `test` / `prod` 以外の値を設定した場合、起動時にエラーとなります。
+
+---
+
 ## 🧪 Standalone Tool Evaluation
 
 `generate_reply` ツールを単体で実行し、ケースごとに簡易スコアを出力できます。

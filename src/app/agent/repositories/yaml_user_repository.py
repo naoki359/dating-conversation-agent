@@ -5,16 +5,18 @@ from typing import Any
 
 import yaml
 
+from app.agent.core.config.settings import Settings
 from app.agent.core.schemas.state import ReactState
 
 
 def load_agent_state(user_id: str) -> ReactState:
     """
-    user_id を受け取り、data/test_user/{user_id}.yaml を読み込んで ReactState を返す。
+    user_id を受け取り、data/{data_source}/{user_id}.yaml を読み込んで ReactState を返す。
 
     例:
         user_id='with_0001'
-        -> data/test_user/with_0001.yaml
+        -> data/test_user/with_0001.yaml  (DATA_SOURCE=test)
+        -> data/user/with_0001.yaml       (DATA_SOURCE=prod)
     """
     file_path = _build_yaml_path(user_id)
     data = _load_yaml(file_path)
@@ -23,10 +25,9 @@ def load_agent_state(user_id: str) -> ReactState:
 
 def _build_yaml_path(user_id: str) -> Path:
     """
-    project_root/data/test_user/{user_id}.yaml の絶対パスを組み立てる。
+    Settings.get_data_dir() / {user_id}.yaml の絶対パスを組み立てる。
     """
-    project_root = Path(__file__).resolve().parents[4]
-    return project_root / "data" / "test_user" / f"{user_id}.yaml"
+    return Settings.get_data_dir() / f"{user_id}.yaml"
 
 
 def _load_yaml(file_path: Path) -> dict[str, Any]:
