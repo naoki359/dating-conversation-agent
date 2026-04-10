@@ -19,3 +19,7 @@ wheels/
 logs/
 
 # data
+/user
+
+# docs
+/docs/issues
