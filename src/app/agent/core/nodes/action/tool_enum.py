@@ -1,5 +1,6 @@
 from enum import Enum
 
+from app.agent.core.tools.generate_first_message.tool import GenerateFirstMessageTool
 from app.agent.core.tools.get_history_and_facts.tool import GetHistoryAndFactsTool
 from app.agent.core.tools.generate_reply.tool import GenerateReplyTool
 from app.agent.core.tools.evaluate_reply.tool import EvaluateReplyTool
@@ -22,6 +23,12 @@ class ToolEnum(Enum):
         GenerateReplyTool().execute,
         "相手のプロフィールと会話履歴を参考に、自然な返信を生成する",
         "返信案が生成され、返信文を次工程で評価・提示できる状態になる"
+    )
+
+    GENERATE_FIRST_MESSAGE = (
+        GenerateFirstMessageTool().execute,
+        "会話履歴がない相手に対して、プロフィールを基に自然で具体性のある初回メッセージを生成する",
+        "初回送信用のメッセージ案が生成されました"
     )
 
     REFINE_REPLY = (

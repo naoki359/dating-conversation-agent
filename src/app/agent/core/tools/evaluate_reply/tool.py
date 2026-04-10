@@ -43,6 +43,6 @@ class EvaluateReplyTool:
             summary="返信品質とプロフィール適合度を評価しました。",
             tool_result={
                 "score_reply_quality": score_result.tool_result,
-                "check_reply_profile_fit": fit_result.tool_result,
+                "check_reply_profile_fit": fit_result,
             },
         )
