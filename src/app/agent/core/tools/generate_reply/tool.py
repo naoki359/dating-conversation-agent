@@ -58,7 +58,7 @@ class GenerateReplyTool:
         conversation_text = self._build_conversation_text(messages)
         conversation_facts_text = self._build_conversation_facts_text(conversation_facts)
         fact_collection_guidance = self._build_fact_collection_guidance(conversation_facts)
-        latest_message_text = latest_message.get("message", "")
+        latest_message_text = latest_message.get("message", "") if latest_message else "最新のメッセージはありません。これから作るものが初回メッセージです。"
 
         print("=== プロンプト用テキスト（会話履歴） ===")
         print(fact_collection_guidance)
