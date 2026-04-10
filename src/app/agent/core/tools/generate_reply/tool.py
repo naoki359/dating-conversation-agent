@@ -28,13 +28,14 @@ class GenerateReplyTool:
         messages = conversation.get("messages", [])
         conversation_facts = scoped_canvas.get("conversation_facts", {})
 
-        if not messages:
-            return BaseToolResult(
-                tool_name=self.name,
-                success=False,
-                summary="会話履歴が見つかりません。",
-                tool_result={},
-            )
+        # 初回メッセージ作成時は空になるため、コメントアウト
+        # if not messages:
+        #     return BaseToolResult(
+        #         tool_name=self.name,
+        #         success=False,
+        #         summary="会話履歴が見つかりません。",
+        #         tool_result={},
+        #     )
 
         # 最新のメッセージ（相手からのメッセージ）を取得
         latest_message = None
