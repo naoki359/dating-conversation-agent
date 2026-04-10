@@ -31,6 +31,9 @@ class GetHistoryTool():
         with open(file_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
         profile = data.get("profile", {})
+        picture = data.get("picture")
+        if picture is not None and isinstance(profile, dict) and "picture" not in profile:
+            profile["picture"] = picture
         conversation = data.get("conversation", {}).get("messages", [])
         updated_at = data.get("conversation", {}).get("updated_at", "")
 
