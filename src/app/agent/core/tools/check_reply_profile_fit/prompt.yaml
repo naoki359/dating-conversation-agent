@@ -22,7 +22,9 @@ messages:
       # 出力ルール
       - fit_score: 0-100 の整数
       - reasons: 箇条書き。具体的な根拠を2-5件（各理由は2文以上で記述）
-      - improvement_suggestions: 箇条書き。改善案を1-5件（各提案は具体例を含める）
+      - improvement_suggestions: 1-5 件のオブジェクト配列
+      - 各 improvement_suggestions 要素は {{ message, priority }} を持つこと
+      - priority は必ず "medium" にすること
 
       # 禁止事項
       - 根拠のない断定

@@ -6,6 +6,7 @@ from typing import Any
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.tools.refine_reply.schema import RefineReplyStructuredOutputSchema
+from app.agent.core.utils.improvement_feedback import FeedbackPriority
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.utils.shared_store import (
     DEFAULT_MEETING_TIMING_PREFERENCE,
@@ -19,6 +20,7 @@ class RefineReplyTool:
 
     name = "refine_reply"
     description = "指摘事項を反映して返信案を改善する"
+    DEFAULT_MEDIUM_PRIORITY_MAX_LOOP_COUNT = 3
 
     def __init__(self) -> None:
         self.llm = get_chat_model_gpt5_4()
@@ -42,6 +44,25 @@ class RefineReplyTool:
             )
 
         feedback_items = self._collect_feedback(scoped_canvas)
+        if not feedback_items:
+            scoped_canvas["reply_should_regenerate"] = False
+            scoped_canvas["fit_score"] = 100
+            scoped_canvas["reply_quality_score"] = 100
+            scoped_canvas["reply_reasoning"] = "具体的な指摘事項が存在しなかったため、修正不要として完了しました。"
+            scoped_canvas["improvement_suggestions"] = []
+
+            return BaseToolResult(
+                tool_name=self.name,
+                success=True,
+                summary="具体的な指摘事項が存在しなかったため、修正せず完了しました。",
+                tool_result={
+                    "refined_reply": original_reply,
+                    "reasoning": "具体的な指摘事項が存在しなかったため、修正不要として完了しました。",
+                    "applied_feedback": [],
+                    "remaining_risks": [],
+                },
+            )
+
         feedback_text = self._build_feedback_text(feedback_items)
         prompt_debug_text = ""
 
@@ -158,30 +179,26 @@ class RefineReplyTool:
         return Path(__file__).resolve().parents[6] / "logs"  / "tmp"
 
     def _collect_feedback(self, scoped_canvas: dict[str, Any]) -> list[str]:
-        feedback_items: list[str] = []
-
         raw_feedback = scoped_canvas.get("improvement_suggestions")
         if isinstance(raw_feedback, str) and raw_feedback.strip():
-            feedback_items.append(raw_feedback.strip())
+            return [raw_feedback.strip()]
         elif isinstance(raw_feedback, list):
-            feedback_items.extend(
+            prioritized_feedback = self._collect_prioritized_feedback(raw_feedback, scoped_canvas)
+            if prioritized_feedback:
+                return prioritized_feedback
+
+            legacy_feedback_items = [
                 item.strip()
                 for item in raw_feedback
                 if isinstance(item, str) and item.strip()
-            )
+            ]
+            return self._dedupe_feedback_items(legacy_feedback_items)
 
-        reasons = scoped_canvas.get("reasons")
-        if isinstance(reasons, list):
-            feedback_items.extend(
-                reason.strip()
-                for reason in reasons
-                if isinstance(reason, str) and reason.strip()
-            )
+        return []
 
+    def _dedupe_feedback_items(self, feedback_items: list[str]) -> list[str]:
         if not feedback_items:
-            feedback_items.append(
-                "明示的な指摘事項がないため、プロフィールとの整合性と自然さを優先して改善する"
-            )
+            return []
 
         deduped_feedback: list[str] = []
         seen: set[str] = set()
@@ -192,6 +209,44 @@ class RefineReplyTool:
             deduped_feedback.append(item)
 
         return deduped_feedback
+
+    def _collect_prioritized_feedback(
+        self,
+        raw_items: list[Any],
+        scoped_canvas: dict[str, Any],
+    ) -> list[str]:
+        current_loop_count = int(scoped_canvas.get("current_action_loop_count", 0) or 0)
+        selected_messages: list[str] = []
+        seen: set[str] = set()
+
+        for priority in ("high", "medium"):
+            for raw_item in raw_items:
+                if not isinstance(raw_item, dict):
+                    continue
+                message = str(raw_item.get("message", "")).strip()
+                item_priority = str(raw_item.get("priority", "medium")).strip().lower()
+                if not message or item_priority != priority:
+                    continue
+                if not self._should_apply_feedback(item_priority, current_loop_count):
+                    continue
+                if message in seen:
+                    continue
+                seen.add(message)
+                selected_messages.append(message)
+
+        return selected_messages
+
+    def _should_apply_feedback(
+        self,
+        priority: FeedbackPriority | str,
+        current_loop_count: int,
+    ) -> bool:
+        if priority == "high":
+            return True
+        if priority == "low":
+            return False
+
+        return current_loop_count <= self.DEFAULT_MEDIUM_PRIORITY_MAX_LOOP_COUNT
 
     def _build_feedback_text(self, feedback_items: list[str]) -> str:
         return "\n".join(f"- {item}" for item in feedback_items)

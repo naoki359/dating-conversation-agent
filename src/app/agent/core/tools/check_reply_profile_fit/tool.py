@@ -5,6 +5,11 @@ from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.tools.check_reply_profile_fit.schema import (
     CheckReplyProfileFitResultSchema,
 )
+from app.agent.core.utils.improvement_feedback import (
+    append_improvement_suggestions,
+    dump_improvement_suggestions,
+    merge_improvement_suggestions,
+)
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
@@ -57,17 +62,17 @@ class CheckReplyProfileFitTool:
             # print(result)
 
             scoped_canvas["fit_score"] = result.fit_score
-            existing_suggestions = scoped_canvas.get("improvement_suggestions", [])
-            new_suggestions = list(result.improvement_suggestions)
-
-            if isinstance(existing_suggestions, list):
-                merged_suggestions = existing_suggestions + new_suggestions
-            elif isinstance(existing_suggestions, str) and existing_suggestions.strip():
-                merged_suggestions = [existing_suggestions.strip()] + new_suggestions
-            else:
-                merged_suggestions = new_suggestions
-
-            scoped_canvas["improvement_suggestions"] = self._dedupe_list(merged_suggestions)
+            normalized_suggestions = merge_improvement_suggestions(
+                [],
+                list(result.improvement_suggestions),
+                default_priority="medium",
+            )
+            result.improvement_suggestions = normalized_suggestions
+            append_improvement_suggestions(
+                scoped_canvas,
+                dump_improvement_suggestions(normalized_suggestions),
+                default_priority="medium",
+            )
 
             return BaseToolResult(
                 tool_name=self.name,
@@ -85,16 +90,3 @@ class CheckReplyProfileFitTool:
 
     def _get_prompt_path(self) -> Path:
         return Path(__file__).resolve().parent / "prompt.yaml"
-
-    def _dedupe_list(self, items: list[str]) -> list[str]:
-        deduped: list[str] = []
-        seen: set[str] = set()
-
-        for item in items:
-            normalized = item.strip()
-            if not normalized or normalized in seen:
-                continue
-            seen.add(normalized)
-            deduped.append(normalized)
-
-        return deduped

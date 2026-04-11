@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 
+from app.agent.core.utils.improvement_feedback import ImprovementSuggestionSchema
+
 
 class ReplySafetyCheckResultSchema(BaseModel):
     safety_ok: bool = Field(
@@ -17,7 +19,7 @@ class ReplySafetyCheckResultSchema(BaseModel):
         description="安全性の評価理由。",
     )
 
-    improvement_suggestions: list[str] = Field(
+    improvement_suggestions: list[ImprovementSuggestionSchema] = Field(
         default_factory=list,
         description="安全性の改善提案。",
     )

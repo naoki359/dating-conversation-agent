@@ -4,6 +4,12 @@ from typing import Any
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.tools.reply_safety_check.schema import ReplySafetyCheckResultSchema
+from app.agent.core.utils.improvement_feedback import (
+    ImprovementSuggestionSchema,
+    append_improvement_suggestions,
+    dump_improvement_suggestions,
+    merge_improvement_suggestions,
+)
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
@@ -81,24 +87,45 @@ class ReplySafetyCheckTool:
 
             if pre_flags["sexual_risk"]:
                 reasons.append("性的な示唆または過度な下ネタのリスクを検知しました。")
-                suggestions.append("性的な含みを完全に外し、安心感のある話題に置き換えてください。")
+                suggestions.append(
+                    ImprovementSuggestionSchema(
+                        message="性的な含みを完全に外し、安心感のある話題に置き換えてください。",
+                        priority="high",
+                    )
+                )
                 detected_risks.append("sexual")
 
             if pre_flags["hurtful_risk"]:
                 reasons.append("侮辱的または相手を傷つける表現のリスクを検知しました。")
-                suggestions.append("否定や攻撃ではなく、相手を尊重する表現に修正してください。")
+                suggestions.append(
+                    ImprovementSuggestionSchema(
+                        message="否定や攻撃ではなく、相手を尊重する表現に修正してください。",
+                        priority="high",
+                    )
+                )
                 detected_risks.append("hurtful")
 
             if pre_flags["pressuring_risk"]:
                 reasons.append("相手に圧をかける表現のリスクを検知しました。")
-                suggestions.append("相手が断りやすい余白を残した誘い方に修正してください。")
+                suggestions.append(
+                    ImprovementSuggestionSchema(
+                        message="相手が断りやすい余白を残した誘い方に修正してください。",
+                        priority="high",
+                    )
+                )
                 detected_risks.append("pressuring")
+
+            normalized_suggestions = merge_improvement_suggestions(
+                [],
+                suggestions,
+                default_priority="high",
+            )
 
             output = {
                 "safety_ok": safety_ok,
                 "should_regenerate": should_regenerate,
                 "reasons": self._dedupe_list(reasons),
-                "improvement_suggestions": self._dedupe_list(suggestions),
+                "improvement_suggestions": dump_improvement_suggestions(normalized_suggestions),
                 "detected_risks": self._dedupe_list(detected_risks),
             }
 
@@ -107,16 +134,11 @@ class ReplySafetyCheckTool:
             scoped_canvas["reply_should_regenerate"] = bool(
                 scoped_canvas.get("reply_should_regenerate", False) or should_regenerate
             )
-
-            existing_suggestions = scoped_canvas.get("improvement_suggestions", [])
-            if isinstance(existing_suggestions, list):
-                merged_suggestions = existing_suggestions + output["improvement_suggestions"]
-            elif isinstance(existing_suggestions, str) and existing_suggestions.strip():
-                merged_suggestions = [existing_suggestions.strip()] + output["improvement_suggestions"]
-            else:
-                merged_suggestions = list(output["improvement_suggestions"])
-
-            scoped_canvas["improvement_suggestions"] = self._dedupe_list(merged_suggestions)
+            append_improvement_suggestions(
+                scoped_canvas,
+                output["improvement_suggestions"],
+                default_priority="high",
+            )
 
             return BaseToolResult(
                 tool_name=self.name,

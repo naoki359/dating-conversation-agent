@@ -4,6 +4,12 @@ from typing import Any
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.tools.score_reply_quality.schema import ScoreReplyQualityResultSchema
+from app.agent.core.utils.improvement_feedback import (
+    ImprovementSuggestionSchema,
+    append_improvement_suggestions,
+    dump_improvement_suggestions,
+    merge_improvement_suggestions,
+)
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
@@ -56,23 +62,30 @@ class ScoreReplyQualityTool:
 
             if duplicate_flags["exact_duplicate"]:
                 reasons.append("直近の自分の発言と同一内容のため大幅減点")
-                improvement_suggestions.append("同じ内容の繰り返しを避け、新しい情報か質問を1つ追加する")
+                improvement_suggestions.append(
+                    ImprovementSuggestionSchema(
+                        message="同じ内容の繰り返しを避け、新しい情報か質問を1つ追加する",
+                        priority="medium",
+                    )
+                )
+
+            normalized_suggestions = merge_improvement_suggestions(
+                [],
+                improvement_suggestions,
+                default_priority="medium",
+            )
 
             output = result.model_dump()
             output["quality_score"] = final_score
             output["should_regenerate"] = should_regenerate
             output["reasons"] = self._dedupe_list(reasons)
-            output["improvement_suggestions"] = self._dedupe_list(improvement_suggestions)
+            output["improvement_suggestions"] = dump_improvement_suggestions(normalized_suggestions)
 
-            existing_suggestions = scoped_canvas.get("improvement_suggestions", [])
-            if isinstance(existing_suggestions, list):
-                merged_suggestions = existing_suggestions + output["improvement_suggestions"]
-            elif isinstance(existing_suggestions, str) and existing_suggestions.strip():
-                merged_suggestions = [existing_suggestions.strip()] + output["improvement_suggestions"]
-            else:
-                merged_suggestions = list(output["improvement_suggestions"])
-
-            scoped_canvas["improvement_suggestions"] = self._dedupe_list(merged_suggestions)
+            append_improvement_suggestions(
+                scoped_canvas,
+                output["improvement_suggestions"],
+                default_priority="medium",
+            )
             scoped_canvas["reply_quality_score"] = final_score
             scoped_canvas["reply_should_regenerate"] = should_regenerate
             scoped_canvas["reply_quality_reasons"] = output["reasons"]

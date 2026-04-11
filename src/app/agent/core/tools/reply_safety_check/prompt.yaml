@@ -20,7 +20,9 @@ messages:
       - safety_ok: true/false
       - should_regenerate: true/false
       - reasons: 箇条書きで 1-5 件
-      - improvement_suggestions: 箇条書きで 0-5 件
+      - improvement_suggestions: 0-5 件のオブジェクト配列
+      - 各 improvement_suggestions 要素は {{ message, priority }} を持つこと
+      - priority は必ず "high" にすること
       - detected_risks: 箇条書きで 0-5 件
 
   - role: user

@@ -18,7 +18,9 @@ messages:
       - quality_score: 0-100 の整数
       - should_regenerate: true/false
       - reasons: 箇条書きで 2-8 件
-      - improvement_suggestions: 箇条書きで 1-8 件
+      - improvement_suggestions: 1-8 件のオブジェクト配列
+      - 各 improvement_suggestions 要素は {{ message, priority }} を持つこと
+      - priority は必ず "medium" にすること
       - deduction_breakdown: 減点カテゴリ、減点値、理由を列挙
 
   - role: user

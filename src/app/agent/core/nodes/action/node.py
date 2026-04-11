@@ -3,6 +3,7 @@ from app.agent.core.nodes.action.schema import ActionOutputSchema
 from app.agent.core.schemas.base_output_schema import BaseOutputSchema
 from app.agent.core.schemas.state import ReactState
 from app.agent.core.nodes.action.tool_enum import ToolEnum
+from app.agent.core.utils.shared_store import get_shared_canvas
 
 
 class ActionNode(BaseNode):
@@ -49,6 +50,9 @@ class ActionNode(BaseNode):
                 tool_result={},
                 is_finished=False,
             )
+
+        scoped_canvas = get_shared_canvas(execution_id)
+        scoped_canvas["current_action_loop_count"] = int(state.get("action_loop_count", 0) or 0)
 
         # ツールを実行
         tool_result = tool_method(execution_id)

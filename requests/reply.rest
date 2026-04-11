@@ -8,7 +8,7 @@ Content-Type: application/json
   "id": "with_0001_test_継続"
 }
 
-### 会話が続いている場合(けど自分の返信で終わっている。期待値：返信待ち)
+### デートに誘える
 POST {{baseUrl}}/reply
 Content-Type: application/json
 

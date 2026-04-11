@@ -1,10 +1,18 @@
 from pathlib import Path
+from difflib import SequenceMatcher
+import re
 from textwrap import dedent
 from typing import Any
 
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.tools.reply_rule_check.schema import ReplyRuleCheckResultSchema
+from app.agent.core.utils.improvement_feedback import (
+    ImprovementSuggestionSchema,
+    append_improvement_suggestions,
+    dump_improvement_suggestions,
+    merge_improvement_suggestions,
+)
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.utils.shared_store import (
     DEFAULT_MEETING_TIMING_PREFERENCE,
@@ -18,6 +26,23 @@ class ReplyRuleCheckTool:
 
     name = "reply_rule_check"
     description = "生成済み返信が質問数や表現ルールを守れているかを確認する"
+    BANNED_WORDS = ("けっこう", "かなり")
+    DUPLICATE_SIMILARITY_THRESHOLD = 0.55
+    TOPIC_HOOK_PATTERNS = (
+        r"ちなみに",
+        r"自分は",
+        r"私は",
+        r"自分だと",
+        r"僕は",
+        r"俺は",
+        r"おすすめ",
+        r"推し",
+        r"好きなのは",
+        r"印象に残ってる",
+        r"印象に残っています",
+        r"お気に入り",
+        r"一番好き",
+    )
 
     def __init__(self) -> None:
         self.llm = get_chat_model_gpt5_4()
@@ -39,7 +64,8 @@ class ReplyRuleCheckTool:
             )
 
         messages = conversation.get("messages", []) if isinstance(conversation, dict) else []
-        pre_flags = self._detect_rule_flags(reply_text)
+        recent_self_messages = self._extract_recent_self_messages(messages)
+        pre_flags = self._detect_rule_flags(reply_text, recent_self_messages)
 
         try:
             prompt_value = self.prompt.invoke(
@@ -63,25 +89,66 @@ class ReplyRuleCheckTool:
 
             if pre_flags["multiple_questions"]:
                 reasons.append("質問が複数含まれており、返信ルールの『質問は1つまで』に抵触しています。")
-                suggestions.append("質問は最も返しやすい1つだけに絞ってください。")
+                suggestions.append(
+                    ImprovementSuggestionSchema(
+                        message="質問は最も返しやすい1つだけに絞ってください。",
+                        priority="high",
+                    )
+                )
                 violations.append("multiple_questions")
 
+            if pre_flags["missing_hook"]:
+                reasons.append("相手が返しやすいフックがなく、must ルールに抵触しています。")
+                suggestions.append(
+                    ImprovementSuggestionSchema(
+                        message="質問を1つ入れるか、相手が返しやすい具体的な話題提供を1つ追加してください。",
+                        priority="high",
+                    )
+                )
+                violations.append("missing_hook")
+
+            if pre_flags["repeated_point"]:
+                reasons.append("直近の自分の発言と同じ論点を繰り返しており、must ルールに抵触しています。")
+                suggestions.append(
+                    ImprovementSuggestionSchema(
+                        message="すでに伝えた共感や感想は繰り返さず、新しいリアクションか次の話題に進めてください。",
+                        priority="high",
+                    )
+                )
+                violations.append("repeated_point")
+
             if pre_flags["banned_word"]:
-                reasons.append("禁止ワード『けっこう』を含んでいます。")
-                suggestions.append("『けっこう』を別表現に置き換えてください。")
+                reasons.append("禁止ワードを含んでいます。")
+                suggestions.append(
+                    ImprovementSuggestionSchema(
+                        message="『けっこう』『かなり』のような禁止ワードは別表現に置き換えてください。",
+                        priority="high",
+                    )
+                )
                 violations.append("banned_word")
 
             if pre_flags["ambiguous_invite"]:
                 reasons.append("誘い文に具体的な日時条件が不足しており、提案が曖昧です。")
-                suggestions.append("候補日時や時間帯を具体的に示してください。")
+                suggestions.append(
+                    ImprovementSuggestionSchema(
+                        message="候補日時や時間帯を具体的に示してください。",
+                        priority="high",
+                    )
+                )
                 violations.append("ambiguous_invite")
+
+            normalized_suggestions = merge_improvement_suggestions(
+                [],
+                suggestions,
+                default_priority="high",
+            )
 
             output = {
                 "rule_score": rule_score,
                 "passed": passed,
                 "should_regenerate": should_regenerate,
                 "reasons": self._dedupe_list(reasons),
-                "improvement_suggestions": self._dedupe_list(suggestions),
+                "improvement_suggestions": dump_improvement_suggestions(normalized_suggestions),
                 "violations": self._dedupe_list(violations),
             }
 
@@ -92,15 +159,11 @@ class ReplyRuleCheckTool:
                 scoped_canvas.get("reply_should_regenerate", False) or should_regenerate
             )
 
-            existing_suggestions = scoped_canvas.get("improvement_suggestions", [])
-            if isinstance(existing_suggestions, list):
-                merged_suggestions = existing_suggestions + output["improvement_suggestions"]
-            elif isinstance(existing_suggestions, str) and existing_suggestions.strip():
-                merged_suggestions = [existing_suggestions.strip()] + output["improvement_suggestions"]
-            else:
-                merged_suggestions = list(output["improvement_suggestions"])
-
-            scoped_canvas["improvement_suggestions"] = self._dedupe_list(merged_suggestions)
+            append_improvement_suggestions(
+                scoped_canvas,
+                output["improvement_suggestions"],
+                default_priority="high",
+            )
 
             return BaseToolResult(
                 tool_name=self.name,
@@ -119,23 +182,36 @@ class ReplyRuleCheckTool:
     def _get_prompt_path(self) -> Path:
         return Path(__file__).resolve().parent / "prompt.yaml"
 
-    def _detect_rule_flags(self, reply_text: str) -> dict[str, bool]:
+    def _detect_rule_flags(self, reply_text: str, recent_self_messages: list[str]) -> dict[str, bool]:
         question_count = reply_text.count("?") + reply_text.count("？")
         normalized = reply_text.lower()
         looks_like_invite = any(keyword in reply_text for keyword in ["会", "飲", "ランチ", "ディナー", "通話", "電話"])
         has_specific_time = any(token in reply_text for token in ["時", "日", "土", "日曜", "平日", "来週", "今週", "午後", "夜"])
+        has_topic_hook = self._has_topic_hook(reply_text)
 
         return {
+            "missing_hook": question_count == 0 and not has_topic_hook,
+            "repeated_point": self._has_repeated_point(reply_text, recent_self_messages),
             "multiple_questions": question_count >= 2,
-            "banned_word": "けっこう" in normalized,
+            "banned_word": any(word in normalized for word in self.BANNED_WORDS),
             "ambiguous_invite": looks_like_invite and not has_specific_time,
         }
 
     def _has_critical_rule_violation(self, pre_flags: dict[str, bool]) -> bool:
-        return bool(pre_flags.get("multiple_questions") or pre_flags.get("banned_word") or pre_flags.get("ambiguous_invite"))
+        return bool(
+            pre_flags.get("missing_hook")
+            or pre_flags.get("repeated_point")
+            or pre_flags.get("multiple_questions")
+            or pre_flags.get("banned_word")
+            or pre_flags.get("ambiguous_invite")
+        )
 
     def _apply_hard_penalty(self, score: int, pre_flags: dict[str, bool]) -> int:
         adjusted = max(0, min(100, score))
+        if pre_flags.get("missing_hook"):
+            adjusted = min(adjusted, 40)
+        if pre_flags.get("repeated_point"):
+            adjusted = min(adjusted, 35)
         if pre_flags.get("multiple_questions"):
             adjusted = min(adjusted, 60)
         if pre_flags.get("banned_word"):
@@ -185,11 +261,75 @@ class ReplyRuleCheckTool:
     def _build_pre_flags_text(self, pre_flags: dict[str, bool]) -> str:
         return "\n".join(
             [
+                f"- missing_hook: {pre_flags.get('missing_hook', False)}",
+                f"- repeated_point: {pre_flags.get('repeated_point', False)}",
                 f"- multiple_questions: {pre_flags.get('multiple_questions', False)}",
                 f"- banned_word: {pre_flags.get('banned_word', False)}",
                 f"- ambiguous_invite: {pre_flags.get('ambiguous_invite', False)}",
             ]
         )
+
+    def _extract_recent_self_messages(self, messages: list[dict[str, Any]]) -> list[str]:
+        self_messages: list[str] = []
+        for msg in messages:
+            if not isinstance(msg, dict):
+                continue
+            if msg.get("sender") != "self":
+                continue
+            text = str(msg.get("message", "")).strip()
+            if text:
+                self_messages.append(text)
+
+        return self_messages[-5:]
+
+    def _has_topic_hook(self, reply_text: str) -> bool:
+        normalized = reply_text.strip()
+        if not normalized:
+            return False
+
+        for pattern in self.TOPIC_HOOK_PATTERNS:
+            if re.search(pattern, normalized):
+                return True
+
+        topic_offer_endings = (
+            "好きです。",
+            "好きです！",
+            "派です。",
+            "派です！",
+            "おすすめです。",
+            "おすすめです！",
+        )
+        return any(ending in normalized for ending in topic_offer_endings)
+
+    def _has_repeated_point(self, reply_text: str, recent_self_messages: list[str]) -> bool:
+        reply_segments = self._extract_meaningful_segments(reply_text)
+        if not reply_segments:
+            return False
+
+        for recent_message in recent_self_messages:
+            recent_segments = self._extract_meaningful_segments(recent_message)
+            for reply_segment in reply_segments:
+                for recent_segment in recent_segments:
+                    similarity = SequenceMatcher(None, reply_segment, recent_segment).ratio()
+                    if similarity >= self.DUPLICATE_SIMILARITY_THRESHOLD:
+                        return True
+
+        return False
+
+    def _extract_meaningful_segments(self, text: str) -> list[str]:
+        raw_segments = re.split(r"[\n。！？!?]+", text)
+        segments: list[str] = []
+        for segment in raw_segments:
+            stripped = self._normalize_text(segment)
+            if len(stripped) < 8:
+                continue
+            segments.append(stripped)
+        return segments
+
+    def _normalize_text(self, text: str) -> str:
+        normalized = re.sub(r"[\s\u3000]+", "", text)
+        normalized = re.sub(r"[😊👍✨☺️♨️🎶wW…・,.、!！?？]", "", normalized)
+        return normalized
 
     def _dedupe_list(self, items: list[str]) -> list[str]:
         deduped: list[str] = []

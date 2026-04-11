@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 
+from app.agent.core.utils.improvement_feedback import ImprovementSuggestionSchema
+
 
 class QualityDeductionItem(BaseModel):
     category: str = Field(
@@ -38,7 +40,7 @@ class ScoreReplyQualityResultSchema(BaseModel):
         description="評価理由。",
     )
 
-    improvement_suggestions: list[str] = Field(
+    improvement_suggestions: list[ImprovementSuggestionSchema] = Field(
         default_factory=list,
         description="改善提案。",
     )
