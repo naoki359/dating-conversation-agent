@@ -5,7 +5,11 @@ from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.tools.generate_reply.schema import GenerateReplyResultSchema
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
-from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
+from app.agent.core.utils.shared_store import (
+    DEFAULT_MEETING_TIMING_PREFERENCE,
+    get_shared_canvas,
+    get_shared_store,
+)
 
 
 class GenerateReplyTool:
@@ -114,12 +118,17 @@ class GenerateReplyTool:
         name = profile.get("name", "")
         age = profile.get("age", "")
         profile_summary = profile.get("profile_summary", "")
+        meeting_timing_preference = (
+            profile.get("meeting_timing_preference")
+            or DEFAULT_MEETING_TIMING_PREFERENCE
+        )
 
         return dedent(
             f"""
             [基本情報]
             名前: {name}
             年齢: {age}
+            出会うまでの希望: {meeting_timing_preference}
 
             [プロフィール要約]
             {profile_summary}

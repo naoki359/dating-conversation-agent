@@ -10,6 +10,27 @@ from typing import Any, Literal, TypedDict
 from textwrap import dedent
 
 
+MeetingTimingPreference = Literal[
+    "できればすぐ会いたい",
+    "気が合えば会いたい",
+    "会う前に通話したい",
+    "メッセージで交流を深めてから",
+]
+
+DEFAULT_MEETING_TIMING_PREFERENCE: MeetingTimingPreference = "気が合えば会いたい"
+
+
+def normalize_meeting_timing_preference(value: Any) -> MeetingTimingPreference:
+    if value in (
+        "できればすぐ会いたい",
+        "気が合えば会いたい",
+        "会う前に通話したい",
+        "メッセージで交流を深めてから",
+    ):
+        return value
+    return DEFAULT_MEETING_TIMING_PREFERENCE
+
+
 # ============================================
 # Message: 1発言単位
 # ============================================
@@ -28,6 +49,7 @@ class Profile(TypedDict):
     age: int
     raw_profile_text: str
     profile_summary: str
+    meeting_timing_preference: MeetingTimingPreference
 
 
 # ============================================

@@ -5,7 +5,7 @@ POST {{baseUrl}}/reply
 Content-Type: application/json
 
 {
-  "id": "with_0001"
+  "id": "with_0001_test"
 }
 
 ### 会話が続いている場合(けど自分の返信で終わっている。期待値：返信待ち)
@@ -13,7 +13,7 @@ POST {{baseUrl}}/reply
 Content-Type: application/json
 
 {
-  "id": "with_0002"
+  "id": "with_0002_test"
 }
 
 ### 会話が少ない場合
@@ -21,7 +21,7 @@ POST {{baseUrl}}/reply
 Content-Type: application/json
 
 {
-  "id": "with_0003"
+  "id": "with_0003_test"
 }
 
 ### 会話無し（初回メッセージ）
@@ -29,7 +29,7 @@ POST {{baseUrl}}/reply
 Content-Type: application/json
 
 {
-  "id": "with_0004"
+  "id": "with_0004_test"
 }
 
 ### 既読スルー
@@ -37,7 +37,7 @@ POST {{baseUrl}}/reply
 Content-Type: application/json
 
 {
-  "id": "with_0005"
+  "id": "with_0005_test"
 }
 
 ### 会話が止まっている
@@ -45,7 +45,7 @@ POST {{baseUrl}}/reply
 Content-Type: application/json
 
 {
-  "id": "with_0006"
+  "id": "with_0006_test"
 }
 
 ### デート打診直前
@@ -53,7 +53,7 @@ POST {{baseUrl}}/reply
 Content-Type: application/json
 
 {
-  "id": "with_0007"
+  "id": "with_0007_test"
 }
 
 ### 少しだけ会話が長い
@@ -61,7 +61,7 @@ POST {{baseUrl}}/reply
 Content-Type: application/json
 
 {
-  "id": "with_0008"
+  "id": "with_0008_test"
 }
 
 ### 勤務地が新宿
@@ -69,5 +69,5 @@ POST {{baseUrl}}/reply
 Content-Type: application/json
 
 {
-  "id": "with_0009"
+  "id": "with_0009_test"
 }

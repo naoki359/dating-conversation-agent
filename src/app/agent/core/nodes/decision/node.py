@@ -12,7 +12,10 @@ from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.config.settings import Settings
 from app.agent.core.nodes.action.tool_enum import ToolEnum
-from app.agent.core.utils.shared_store import get_shared_store
+from app.agent.core.utils.shared_store import (
+    DEFAULT_MEETING_TIMING_PREFERENCE,
+    get_shared_store,
+)
 
 
 class DecisionNode(BaseNode):
@@ -70,12 +73,17 @@ class DecisionNode(BaseNode):
         age = profile.get("age", "")
         raw_profile_text = profile.get("raw_profile_text", "")
         profile_summary = profile.get("profile_summary", "")
+        meeting_timing_preference = (
+            profile.get("meeting_timing_preference")
+            or DEFAULT_MEETING_TIMING_PREFERENCE
+        )
 
         return dedent(
             f"""
             [プロフィール基本情報]
             名前: {name}
             年齢: {age}
+            出会うまでの希望: {meeting_timing_preference}
 
             [プロフィール要約]
             {profile_summary}
