@@ -16,7 +16,7 @@ Content-Type: application/json
   "id": "with_0002_test_デート"
 }
 
-### 会話が少ない場合
+### シーパラのような固有名詞に対して、自分あてに質問が来た場合
 POST {{baseUrl}}/reply
 Content-Type: application/json
 

@@ -152,6 +152,11 @@ class Canvas(TypedDict, total=False):
     reply_quality_score: int
     reply_should_regenerate: bool
     reply_quality_reasons: list[str]
+    reply_safety_ok: bool
+    reply_safety_reasons: list[str]
+    reply_rule_score: int
+    reply_rule_passed: bool
+    reply_rule_reasons: list[str]
     # reply_check_result: dict[str, Any]
 
     # -----------------------------------

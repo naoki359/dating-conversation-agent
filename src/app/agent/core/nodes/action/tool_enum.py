@@ -51,9 +51,9 @@ class ToolEnum(Enum):
 
     EVALUATE_REPLY = (
         EvaluateReplyTool().execute,
-        "生成済み返信の品質・安全性とプロフィール適合度を一括評価する",
+        "生成済み返信の安全性、返信ルール、品質、プロフィール適合度を一括評価する",
         "GENERATE_REPLY または INVITE_DATE_REPLY の直後に優先して使用すること。未評価の生成済み返信がある場合は、他の生成系ツールより先に使用すること。",
-        "返信品質スコアとプロフィール適合度、改善提案が得られ、改善判断ができる状態になる"
+        "安全性、返信ルール、返信品質、プロフィール適合度、改善提案が得られ、改善判断ができる状態になる"
     )
 
     def __init__(self, method, description, important_notes, completion_state):

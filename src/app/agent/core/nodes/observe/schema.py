@@ -9,7 +9,7 @@ DecisionLiteral = Literal["continue", "end"]
 
 
 class ObserveOutputSchema(BaseOutputSchema):
-    """Observe node の出力スキーマ。fit_score と action_loop_count に基づいて判定結果を返す。"""
+    """Observe node の出力スキーマ。評価結果と action_loop_count に基づいて判定結果を返す。"""
 
     fit_score: int | None = Field(
         ...,
@@ -32,7 +32,7 @@ class ObserveOutputSchema(BaseOutputSchema):
     reasoning: str = Field(
         ...,
         description=(
-            "判定の理由。fit_score や action_loop_count がどのような理由で"
+            "判定の理由。fit_score、reply_should_regenerate や action_loop_count がどのような理由で"
             "'continue' または 'end' と判定されたかを説明する。"
         ),
     )

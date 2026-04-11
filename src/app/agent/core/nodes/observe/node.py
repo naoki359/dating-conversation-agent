@@ -11,8 +11,8 @@ from app.agent.core.utils.shared_store import get_shared_canvas
 
 class ObserveNode(BaseNode):
     """
-    各ステップの終わりに状態を監視し、fit_score・reply_quality_score と
-    action_loop_count に基づいて
+    各ステップの終わりに状態を監視し、fit_score・reply_quality_score・
+    reply_should_regenerate と action_loop_count に基づいて
     ループを継続するか終了するかを判定するノード。
     """
 
@@ -25,12 +25,13 @@ class ObserveNode(BaseNode):
 
     def execute(self, state: ReactState) -> ObserveOutputSchema:
         """
-        fit_score・reply_quality_score と action_loop_count を確認し、判定を行う。
+        fit_score・reply_quality_score・reply_should_regenerate と action_loop_count を確認し、判定を行う。
         """
         execution_id = state.get("execution_id")
         scoped_canvas = get_shared_canvas(execution_id)
         fit_score = int(scoped_canvas.get("fit_score", 0) or 0)
         reply_quality_score = int(scoped_canvas.get("reply_quality_score", 0) or 0)
+        reply_should_regenerate = bool(scoped_canvas.get("reply_should_regenerate", False))
         action_loop_count = state.get("action_loop_count", 0)
 
         if not state.get("observation_flg", False):
@@ -47,6 +48,7 @@ class ObserveNode(BaseNode):
         decision, reasoning = self._make_decision(
             fit_score,
             reply_quality_score,
+            reply_should_regenerate,
             action_loop_count,
         )
 
@@ -55,6 +57,7 @@ class ObserveNode(BaseNode):
             success=True,
             summary=(
                 f"fit_score={fit_score}, reply_quality_score={reply_quality_score}, "
+                f"reply_should_regenerate={reply_should_regenerate}, "
                 f"action_loop_count={action_loop_count} に基づいて '{decision}' と判定。"
                 "指摘事項を基に返信の再作成を行うこと"
             ),
@@ -95,10 +98,11 @@ class ObserveNode(BaseNode):
         self,
         fit_score: int,
         reply_quality_score: int,
+        reply_should_regenerate: bool,
         action_loop_count: int,
     ) -> tuple[str, str]:
         """
-        fit_score・reply_quality_score と action_loop_count に基づいて、
+        fit_score・reply_quality_score・reply_should_regenerate と action_loop_count に基づいて、
         継続するか終了するかを判定する。
 
         Returns:
@@ -112,6 +116,13 @@ class ObserveNode(BaseNode):
                 "ため、ループを終了します。"
             )
             return "end", reason
+
+        if reply_should_regenerate:
+            reason = (
+                "安全性・返信ルール・返信品質・プロフィール適合度のいずれかで"
+                "再生成が必要と判定されたため、ループを継続します。"
+            )
+            return "continue", reason
 
         # fit_score と reply_quality_score の両方が閾値以上の場合は終了
         if (
