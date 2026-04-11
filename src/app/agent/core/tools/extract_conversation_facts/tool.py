@@ -54,11 +54,11 @@ class ExtractConversationFactsTool:
             structured_llm = self.llm.with_structured_output(ExtractedConversationFacts)
             result = structured_llm.invoke(prompt_value)
 
-            print("=== プロンプト ===")
-            print(prompt_value)
+            # print("=== プロンプト ===")
+            # print(prompt_value)
 
-            print("=== LLMからの抽出結果 ===")
-            print(result)
+            # print("=== LLMからの抽出結果 ===")
+            # print(result)
 
             facts = ExtractedConversationFacts.model_validate(result)
 

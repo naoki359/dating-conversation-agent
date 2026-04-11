@@ -176,8 +176,9 @@ class DecisionNode(BaseNode):
         """利用可能なツールの情報を構築する"""
         lines = []
         for tool in ToolEnum:
+            important_notes = f" / 重要事項: {tool.important_notes}" if tool.important_notes else ""
             lines.append(
-                f"- {tool.name}: {tool.description} (完了後状態: {tool.completion_state})"
+                f"- {tool.name}: {tool.description}{important_notes} (完了後状態: {tool.completion_state})"
             )
         return "\n".join(lines)
 

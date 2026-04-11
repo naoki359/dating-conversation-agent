@@ -28,23 +28,23 @@ conversation:
         プロフィール見て気になりました。
 
     - id: m002
-      timestamp: 2026-03-21T19:03:00+09:00
+      timestamp: 2026-03-21T21:00:00+09:00
       sender: other
       message: |
         ありがとうございます、うれしいです☺️
 
     - id: m003
-      timestamp: 2026-03-21T19:06:00+09:00
+      timestamp: 2026-03-21T23:00:00+09:00
       sender: self
       message: |
         映画お好きなんですね。
         最近何か観ましたか？
 
     - id: m004
-      timestamp: 2026-03-21T19:10:00+09:00
+      timestamp: 2026-03-22T19:00:00+09:00
       sender: other
       message: |
         最近は韓国映画をよく観てます！
         サスペンス系が好きで、伏線回収がある作品が好きです😂
 
-  updated_at: 2026-03-21T19:10:00+09:00
+  updated_at: 2026-03-22T19:10:00+09:00
