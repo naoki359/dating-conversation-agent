@@ -20,7 +20,8 @@ messages:
 
       # 判定ルール
       - 質問が0件かつ具体的な話題提供もない場合は passed を false にし、must violation として扱う
-      - 直近の自分の発言と同じ論点の繰り返しを検知した場合は passed を false にし、must violation として扱う
+      - 過去の自分の発言と同じ論点の繰り返しを検知した場合は passed を false にし、must violation として扱う
+      - 過去の発言と同じ内容で共感を繰り返した場合は passed を false にし、must violation として扱う
       - 質問が2つ以上ある場合は passed を false に寄せる
       - ルール違反が明確な場合 should_regenerate は true に寄せる
       - reasons と improvement_suggestions は具体的に書く
