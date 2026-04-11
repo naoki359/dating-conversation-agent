@@ -21,3 +21,7 @@ class ExtractedConversationFacts(BaseModel):
         default=None,
         description="会う場所を提案しやすいエリア（居住地または勤務地）。情報がなければ null。",
     )
+    available_time: ConversationFact | None = Field(
+        default=None,
+        description="相手が会いやすい、または空いていると分かる時間帯。情報がなければ 「土、日、祝日の15:00～」",
+    )

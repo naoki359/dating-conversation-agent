@@ -111,6 +111,7 @@ class ConversationFact(TypedDict, total=False):
 
 class ConversationFacts(TypedDict, total=False):
     meeting_area: ConversationFact | None
+    available_time: ConversationFact | None
 
 
 # ============================================

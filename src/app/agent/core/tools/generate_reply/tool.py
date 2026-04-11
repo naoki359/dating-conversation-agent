@@ -155,31 +155,49 @@ class GenerateReplyTool:
             return "抽出済み情報はありません。"
 
         meeting_area = conversation_facts.get("meeting_area")
-        if not meeting_area:
-            return "meeting_area: 未取得"
+        available_time = conversation_facts.get("available_time")
 
-        value = meeting_area.get("value", "")
-        confidence = meeting_area.get("confidence", "")
-        source_quote = meeting_area.get("source_quote", "")
-        return dedent(
-            f"""
-            meeting_area: {value or '未取得'}
-            confidence: {confidence or 'unknown'}
-            source_quote: {source_quote or 'なし'}
-            """
-        ).strip()
+        meeting_area_text = "meeting_area: 未取得"
+        if meeting_area:
+            meeting_area_text = dedent(
+                f"""
+                meeting_area: {meeting_area.get('value', '') or '未取得'}
+                confidence: {meeting_area.get('confidence', '') or 'unknown'}
+                source_quote: {meeting_area.get('source_quote', '') or 'なし'}
+                """
+            ).strip()
+
+        available_time_text = "available_time: 未取得"
+        if available_time:
+            available_time_text = dedent(
+                f"""
+                available_time: {available_time.get('value', '') or '未取得'}
+                confidence: {available_time.get('confidence', '') or 'unknown'}
+                source_quote: {available_time.get('source_quote', '') or 'なし'}
+                """
+            ).strip()
+
+        return f"{meeting_area_text}\n\n{available_time_text}"
 
     def _build_fact_collection_guidance(self, conversation_facts: dict) -> str:
         """情報取得の優先度に関するガイダンスを構築。"""
         meeting_area = conversation_facts.get("meeting_area") if conversation_facts else None
+        available_time = conversation_facts.get("available_time") if conversation_facts else None
+
+        missing_facts: list[str] = []
         if not meeting_area or not meeting_area.get("value"):
-            return (
-                "meeting_area が未取得です。"
-                "自然な流れを崩さず、次の会話で会いやすいエリアを聞き出せる返信を優先してください。"
-                "デート提案は meeting_area 取得後に行ってください。"
+            missing_facts.append(
+                "meeting_area が未取得です。自然な流れを崩さず、次の会話で会いやすいエリアを聞き出せる返信を優先してください。"
+            )
+        if not available_time or not available_time.get("value"):
+            missing_facts.append(
+                "available_time が未取得です。自然な流れを崩さず、次の会話で空いている時間帯を聞き出せる返信を優先してください。"
             )
 
+        if missing_facts:
+            return "".join(missing_facts) + "デート提案は必要情報の取得後に行ってください。"
+
         return (
-            "meeting_area は取得済みです。"
+            "meeting_area と available_time は取得済みです。"
             "会話フェーズに応じて、自然なタイミングでデート提案を検討できます。"
         )
