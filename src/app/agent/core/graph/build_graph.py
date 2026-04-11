@@ -2,6 +2,7 @@ from langgraph.graph import END, StateGraph
 
 from app.agent.core.nodes.action.node import ActionNode
 from app.agent.core.nodes.decision.node import DecisionNode
+from app.agent.core.nodes.final_reply_rewrite.node import FinalReplyRewriteNode
 from app.agent.core.nodes.observe.node import ObserveNode
 from app.agent.core.schemas.state import ReactState
 
@@ -14,7 +15,7 @@ from app.agent.core.schemas.state import ReactState
 def _route_after_observe(state: ReactState) -> str:
     is_finished = state.get("is_finished", False)
     if is_finished:
-        return END
+        return "final_reply_rewrite"
     return "decision"
 
 # def build_graph():
@@ -39,10 +40,12 @@ def build_graph():
     decision_node = DecisionNode()
     action_node = ActionNode()
     observe_node = ObserveNode()
+    final_reply_rewrite_node = FinalReplyRewriteNode()
 
     workflow.add_node("decision", decision_node.run)
     workflow.add_node("action", action_node.run)
     workflow.add_node("observe", observe_node.run)
+    workflow.add_node("final_reply_rewrite", final_reply_rewrite_node.run)
 
     workflow.set_entry_point("decision")
     workflow.add_edge("decision", "action")
@@ -60,8 +63,9 @@ def build_graph():
         _route_after_observe,
         {
             "decision": "decision",
-            END: END,
+            "final_reply_rewrite": "final_reply_rewrite",
         },
     )
+    workflow.add_edge("final_reply_rewrite", END)
 
     return workflow.compile()

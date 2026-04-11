@@ -120,6 +120,20 @@ class ConversationFacts(TypedDict, total=False):
     available_time: ConversationFact | None
 
 
+class ClassifiedConversationTerm(TypedDict, total=False):
+    expression: str
+    normalized_expression: str
+    speaker: Literal["self", "other", "both"]
+    occurrence_count: int
+    source_quotes: list[str]
+
+
+class ConversationWordClassification(TypedDict, total=False):
+    topic_terms: list[ClassifiedConversationTerm]
+    reaction_terms: list[ClassifiedConversationTerm]
+    function_terms: list[ClassifiedConversationTerm]
+
+
 # ============================================
 # Canvas: プロセス内で更新される成果物
 # ============================================
@@ -165,6 +179,7 @@ class Canvas(TypedDict, total=False):
     # 会話から抽出した重要情報
     # -----------------------------------
     conversation_facts: ConversationFacts
+    conversation_word_classification: ConversationWordClassification
 
 
 @dataclass
