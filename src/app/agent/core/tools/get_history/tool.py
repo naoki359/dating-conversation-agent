@@ -3,7 +3,10 @@ import yaml
 from app.agent.core.config.settings import Settings
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.tools.get_history.schema import GetHistoryResultSchema
-from app.agent.core.utils.shared_store import get_shared_store
+from app.agent.core.utils.shared_store import (
+    get_shared_store,
+    normalize_meeting_timing_preference,
+)
 
 
 class GetHistoryTool():
@@ -30,7 +33,11 @@ class GetHistoryTool():
 
         with open(file_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
-        profile = data.get("profile", {})
+        profile_raw = data.get("profile", {})
+        profile = dict(profile_raw) if isinstance(profile_raw, dict) else {}
+        profile["meeting_timing_preference"] = normalize_meeting_timing_preference(
+            profile.get("meeting_timing_preference")
+        )
         picture = data.get("picture")
         if picture is not None and isinstance(profile, dict) and "picture" not in profile:
             profile["picture"] = picture

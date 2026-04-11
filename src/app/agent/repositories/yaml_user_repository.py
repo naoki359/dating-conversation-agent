@@ -7,6 +7,7 @@ import yaml
 
 from app.agent.core.config.settings import Settings
 from app.agent.core.schemas.state import ReactState
+from app.agent.core.utils.shared_store import normalize_meeting_timing_preference
 
 
 def load_agent_state(user_id: str) -> ReactState:
@@ -90,6 +91,9 @@ def _build_initial_state(data: dict[str, Any]) -> ReactState:
             "age": profile_raw.get("age", 0),
             "raw_profile_text": profile_raw.get("raw_profile_text", ""),
             "profile_summary": profile_raw.get("profile_summary", ""),
+            "meeting_timing_preference": normalize_meeting_timing_preference(
+                profile_raw.get("meeting_timing_preference")
+            ),
         },
         "conversation": {
             "messages": normalized_messages,

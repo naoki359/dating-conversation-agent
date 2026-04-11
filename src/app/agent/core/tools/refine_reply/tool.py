@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 from typing import Any
@@ -6,7 +7,11 @@ from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.tools.refine_reply.schema import RefineReplyStructuredOutputSchema
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
-from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
+from app.agent.core.utils.shared_store import (
+    DEFAULT_MEETING_TIMING_PREFERENCE,
+    get_shared_canvas,
+    get_shared_store,
+)
 
 
 class RefineReplyTool:
@@ -38,6 +43,7 @@ class RefineReplyTool:
 
         feedback_items = self._collect_feedback(scoped_canvas)
         feedback_text = self._build_feedback_text(feedback_items)
+        prompt_debug_text = ""
 
         try:
             prompt_value = self.prompt.invoke(
@@ -50,9 +56,16 @@ class RefineReplyTool:
                     "feedback_text": feedback_text,
                 }
             )
+            prompt_debug_text = self._render_prompt_text(prompt_value)
 
             structured_llm = self.llm.with_structured_output(RefineReplyStructuredOutputSchema)
             result = structured_llm.invoke(prompt_value)
+
+            debug_text = self._build_debug_output(
+                prompt_text=prompt_debug_text,
+                refined_reply=result.refined_reply
+            )
+            self._write_text_to_timestamped_file(debug_text)
 
             scoped_canvas["generated_reply"] = result.refined_reply
             scoped_canvas["reply_reasoning"] = result.reasoning
@@ -60,10 +73,16 @@ class RefineReplyTool:
             return BaseToolResult(
                 tool_name=self.name,
                 success=True,
-                summary="指摘事項を基に返信案を修正しました。",
+                summary="指摘事項を基に返信案を修正しました。再度評価を行ってください",
                 tool_result=result.model_dump(),
             )
         except Exception as exc:
+            if prompt_debug_text:
+                error_debug_text = self._build_debug_output(
+                    prompt_text=prompt_debug_text,
+                    error_message=str(exc),
+                )
+                self._write_text_to_timestamped_file(error_debug_text)
             return BaseToolResult(
                 tool_name=self.name,
                 success=False,
@@ -74,10 +93,74 @@ class RefineReplyTool:
     def _get_prompt_path(self) -> Path:
         return Path(__file__).resolve().parent / "prompt.yaml"
 
+    def _render_prompt_text(self, prompt_value: Any) -> str:
+        if not hasattr(prompt_value, "to_messages"):
+            return self._format_debug_section(
+                title="[refine_reply] prompt_value",
+                body=str(prompt_value),
+            )
+
+        message_blocks: list[str] = []
+        for message in prompt_value.to_messages():
+            role = getattr(message, "type", "unknown")
+            content = getattr(message, "content", "")
+            message_blocks.append(f"[{role}]\n{content}")
+        return self._format_debug_section(
+            title="[refine_reply] prompt",
+            body=("\n" + ("-" * 80) + "\n").join(message_blocks),
+        )
+
+    def _build_debug_output(
+        self,
+        prompt_text: str,
+        refined_reply: str | None = None,
+        error_message: str | None = None,
+    ) -> str:
+        sections = [prompt_text]
+
+        if refined_reply is not None:
+            sections.append(
+                self._format_debug_section(
+                    title="[refine_reply] result.refined_reply",
+                    body=refined_reply,
+                )
+            )
+
+        if error_message is not None:
+            sections.append(
+                self._format_debug_section(
+                    title="[refine_reply] error",
+                    body=error_message,
+                )
+            )
+
+        return "\n".join(sections) + "\n"
+
+    def _format_debug_section(self, title: str, body: str) -> str:
+        separator = "=" * 80
+        return f"{title}\n{separator}\n{body}\n"
+
+    def _write_text_to_timestamped_file(self, text: str) -> Path:
+        output_dir = self._get_debug_output_dir()
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        output_path = output_dir / f"{timestamp}.txt"
+        suffix = 1
+        while output_path.exists():
+            output_path = output_dir / f"{timestamp}_{suffix}.txt"
+            suffix += 1
+
+        output_path.write_text(text, encoding="utf-8")
+        return output_path
+
+    def _get_debug_output_dir(self) -> Path:
+        return Path(__file__).resolve().parents[6] / "logs"  / "tmp"
+
     def _collect_feedback(self, scoped_canvas: dict[str, Any]) -> list[str]:
         feedback_items: list[str] = []
 
-        raw_feedback = scoped_canvas.get("fit_improvement_suggestion")
+        raw_feedback = scoped_canvas.get("improvement_suggestions")
         if isinstance(raw_feedback, str) and raw_feedback.strip():
             feedback_items.append(raw_feedback.strip())
         elif isinstance(raw_feedback, list):
@@ -121,11 +204,16 @@ class RefineReplyTool:
         age = profile.get("age", "")
         raw_profile_text = profile.get("raw_profile_text", "")
         profile_summary = profile.get("profile_summary", "")
+        meeting_timing_preference = (
+            profile.get("meeting_timing_preference")
+            or DEFAULT_MEETING_TIMING_PREFERENCE
+        )
 
         return dedent(
             f"""
             名前: {name}
             年齢: {age}
+            出会うまでの希望: {meeting_timing_preference}
 
             [プロフィール要約]
             {profile_summary}
