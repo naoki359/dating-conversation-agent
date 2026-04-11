@@ -1,5 +1,6 @@
 from pathlib import Path
 from textwrap import dedent
+from typing import Any
 
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.tools.generate_reply.schema import GenerateReplyResultSchema
@@ -27,6 +28,7 @@ class GenerateReplyTool:
         # 必要なデータを取得
         scoped_store = get_shared_store(execution_id)
         scoped_canvas = get_shared_canvas(execution_id)
+        self_profile = scoped_store.get("self_profile", {})
         profile = scoped_store.get("profile", {})
         conversation = scoped_store.get("conversation", {})
         messages = conversation.get("messages", [])
@@ -58,6 +60,7 @@ class GenerateReplyTool:
         #     )
 
         # プロンプト用のテキストを構築
+        self_profile_text = self._build_self_profile_text(self_profile)
         profile_text = self._build_profile_text(profile)
         conversation_text = self._build_conversation_text(messages)
         conversation_facts_text = self._build_conversation_facts_text(conversation_facts)
@@ -71,6 +74,7 @@ class GenerateReplyTool:
             # LLMに構造化出力を指定
             prompt_value = self.prompt.invoke(
                 {
+                    "self_profile_text": self_profile_text,
                     "profile_text": profile_text,
                     "conversation_text": conversation_text,
                     "conversation_facts_text": conversation_facts_text,
@@ -113,7 +117,7 @@ class GenerateReplyTool:
         """プロンプトファイルのパスを取得。"""
         return Path(__file__).resolve().parent / "prompt.yaml"
 
-    def _build_profile_text(self, profile: dict) -> str:
+    def _build_profile_text(self, profile: dict[str, Any]) -> str:
         """プロフィールテキストを構築。"""
         name = profile.get("name", "")
         age = profile.get("age", "")
@@ -135,7 +139,31 @@ class GenerateReplyTool:
             """
         ).strip()
 
-    def _build_conversation_text(self, messages: list) -> str:
+    def _build_self_profile_text(self, profile: dict[str, Any]) -> str:
+        """自分のプロフィールテキストを構築。"""
+        if not profile:
+            return "自分のプロフィール情報はありません。"
+
+        name = profile.get("name", "")
+        age = profile.get("age", "")
+        profile_summary = profile.get("profile_summary", "")
+        raw_profile_text = str(profile.get("raw_profile_text", "")).strip()
+
+        return dedent(
+            f"""
+            [基本情報]
+            名前: {name}
+            年齢: {age}
+
+            [プロフィール要約]
+            {profile_summary or '要約はありません。'}
+
+            [プロフィール原文]
+            {raw_profile_text or '原文はありません。'}
+            """
+        ).strip()
+
+    def _build_conversation_text(self, messages: list[dict[str, Any]]) -> str:
         """会話履歴テキストを構築。"""
         if not messages:
             return "会話履歴はありません。"
