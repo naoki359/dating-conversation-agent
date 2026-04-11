@@ -1,5 +1,6 @@
 from enum import Enum
 
+from app.agent.core.tools.invite_date_reply.tool import InviteDateReplyTool
 from app.agent.core.tools.generate_first_message.tool import GenerateFirstMessageTool
 from app.agent.core.tools.get_history_and_facts.tool import GetHistoryAndFactsTool
 from app.agent.core.tools.generate_reply.tool import GenerateReplyTool
@@ -23,6 +24,12 @@ class ToolEnum(Enum):
         GenerateReplyTool().execute,
         "相手のプロフィールと会話履歴を参考に、自然な返信を生成する",
         "返信案が生成され、返信文を次工程で評価・提示できる状態になる"
+    )
+
+    INVITE_DATE_REPLY = (
+        InviteDateReplyTool().execute,
+        "重要情報と店舗候補を使って、デート場所と日時を含む誘い文を生成する",
+        "デート打診用の返信文が生成され、必要に応じて通話の代替案も提示できる状態になる"
     )
 
     GENERATE_FIRST_MESSAGE = (

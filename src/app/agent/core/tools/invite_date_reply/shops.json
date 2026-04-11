@@ -1,0 +1,86 @@
+[
+  {
+    "name": "新宿三丁目クラフト食堂",
+    "area": "新宿",
+    "time_slot": "夜",
+    "type": "居酒屋",
+    "url": "https://example.com/shops/shinjuku-craft-shokudo"
+  },
+  {
+    "name": "新宿御苑前ブリューワーズテーブル",
+    "area": "新宿",
+    "time_slot": "夕方",
+    "type": "カフェ",
+    "url": "https://example.com/shops/shinjuku-brewers-table"
+  },
+  {
+    "name": "池袋西口ブックカフェ灯り",
+    "area": "池袋",
+    "time_slot": "昼",
+    "type": "カフェ",
+    "url": "https://example.com/shops/ikebukuro-book-cafe-akari"
+  },
+  {
+    "name": "池袋駅前小皿バル",
+    "area": "池袋",
+    "time_slot": "夜",
+    "type": "居酒屋",
+    "url": "https://example.com/shops/ikebukuro-kozara-bal"
+  },
+  {
+    "name": "新橋ガード下ハイボール堂",
+    "area": "新橋",
+    "time_slot": "夜",
+    "type": "居酒屋",
+    "url": "https://example.com/shops/shimbashi-highball-do"
+  },
+  {
+    "name": "新橋テラス珈琲スタンド",
+    "area": "新橋",
+    "time_slot": "昼",
+    "type": "カフェ",
+    "url": "https://example.com/shops/shimbashi-terrace-coffee-stand"
+  },
+  {
+    "name": "上野公園口カフェ蒼",
+    "area": "上野",
+    "time_slot": "昼",
+    "type": "カフェ",
+    "url": "https://example.com/shops/ueno-cafe-ao"
+  },
+  {
+    "name": "上野仲町しっとり酒場",
+    "area": "上野",
+    "time_slot": "夜",
+    "type": "居酒屋",
+    "url": "https://example.com/shops/ueno-shittori-sakaba"
+  },
+  {
+    "name": "上野不忍テラスラウンジ",
+    "area": "上野",
+    "time_slot": "夕方",
+    "type": "カフェ",
+    "url": "https://example.com/shops/ueno-shinobazu-terrace-lounge"
+  },
+  {
+    "name": "池袋南口テラスダイナー",
+    "area": "池袋",
+    "time_slot": "夕方",
+    "type": "カフェ",
+    "url": "https://example.com/shops/ikebukuro-terrace-diner"
+  },
+  {
+    "name": "新宿東口ネオ酒場みのり",
+    "area": "新宿",
+    "time_slot": "夜",
+    "type": "居酒屋",
+    "url": "https://example.com/shops/shinjuku-neo-sakaba-minori"
+  },
+  {
+    "name": "新橋レンガ通り夕暮れカフェ",
+    "area": "新橋",
+    "time_slot": "夕方",
+    "type": "カフェ",
+    "url": "https://example.com/shops/shimbashi-yugure-cafe"
+  }
+]
