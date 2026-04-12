@@ -1,6 +1,5 @@
 import uuid
-from typing import Optional
-from functools import lru_cache
+from typing import Any, Optional
 
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
@@ -22,6 +21,8 @@ class ReplyRequest(BaseModel):
 class ReplyResponse(BaseModel):
     generated_reply: str
     reply_reasoning: Optional[str] = None
+    reply_candidates: list[dict[str, Any]] = Field(default_factory=list)
+    selected_reply_candidate_id: str = ""
 
 
 # @lru_cache(maxsize=1)
@@ -58,9 +59,14 @@ def generate_reply(request: ReplyRequest):
 
         # 作成した返信を取得して返却する
         canvas = get_shared_canvas(execution_id)
+        reply_candidates = canvas.get("reply_candidates", [])
         return ReplyResponse(
             generated_reply=str(canvas.get("generated_reply", "")),
             reply_reasoning=str(canvas.get("reply_reasoning", "")),
+            reply_candidates=(
+                reply_candidates if isinstance(reply_candidates, list) else []
+            ),
+            selected_reply_candidate_id=str(canvas.get("selected_reply_candidate_id", "")),
         )
     finally:
         # バケットの削除

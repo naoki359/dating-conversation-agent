@@ -10,6 +10,7 @@ from app.agent.core.schemas.state import ReactState
 from app.agent.core.tools.evaluate_reply_candidates.tool import EvaluateReplyCandidatesTool
 from app.agent.core.tools.generate_reply_candidates.tool import GenerateReplyCandidatesTool
 from app.agent.core.tools.get_history_and_facts.tool import GetHistoryAndFactsTool
+from app.agent.core.tools.refine_reply_candidates.tool import RefineReplyCandidatesTool
 
 # def _route_after_action(state: ReactState) -> str:
 #     observation_flg = state.get("observation_flg", False)
@@ -95,16 +96,30 @@ def build_fixed_graph():
         node_name="fixed_generate_reply_candidates_node",
         tool=GenerateReplyCandidatesTool(),
     )
-    evaluate_reply_candidates_node = FixedToolNode(
-        node_name="fixed_evaluate_reply_candidates_node",
+    first_evaluate_reply_candidates_node = FixedToolNode(
+        node_name="fixed_first_evaluate_reply_candidates_node",
         tool=EvaluateReplyCandidatesTool(),
     )
-    final_reply_rewrite_node = FinalReplyRewriteNode()
+    refine_reply_candidates_node = FixedToolNode(
+        node_name="fixed_refine_reply_candidates_node",
+        tool=RefineReplyCandidatesTool(),
+    )
+    final_evaluate_reply_candidates_node = FixedToolNode(
+        node_name="fixed_final_evaluate_reply_candidates_node",
+        tool=EvaluateReplyCandidatesTool(),
+    )
 
     workflow.add_node("fixed_get_history_and_facts", get_history_and_facts_node.run)
     workflow.add_node("fixed_generate_reply_candidates", generate_reply_candidates_node.run)
-    workflow.add_node("fixed_evaluate_reply_candidates", evaluate_reply_candidates_node.run)
-    workflow.add_node("final_reply_rewrite", final_reply_rewrite_node.run)
+    workflow.add_node(
+        "fixed_first_evaluate_reply_candidates",
+        first_evaluate_reply_candidates_node.run,
+    )
+    workflow.add_node("fixed_refine_reply_candidates", refine_reply_candidates_node.run)
+    workflow.add_node(
+        "fixed_final_evaluate_reply_candidates",
+        final_evaluate_reply_candidates_node.run,
+    )
 
     workflow.set_entry_point("fixed_get_history_and_facts")
     workflow.add_conditional_edges(
@@ -119,19 +134,34 @@ def build_fixed_graph():
         "fixed_generate_reply_candidates",
         _route_after_fixed_step,
         {
-            "next": "fixed_evaluate_reply_candidates",
+            "next": "fixed_first_evaluate_reply_candidates",
             "end": END,
         },
     )
     workflow.add_conditional_edges(
-        "fixed_evaluate_reply_candidates",
+        "fixed_first_evaluate_reply_candidates",
         _route_after_fixed_step,
         {
-            "next": "final_reply_rewrite",
+            "next": "fixed_refine_reply_candidates",
             "end": END,
         },
     )
-    workflow.add_edge("final_reply_rewrite", END)
+    workflow.add_conditional_edges(
+        "fixed_refine_reply_candidates",
+        _route_after_fixed_step,
+        {
+            "next": "fixed_final_evaluate_reply_candidates",
+            "end": END,
+        },
+    )
+    workflow.add_conditional_edges(
+        "fixed_final_evaluate_reply_candidates",
+        _route_after_fixed_step,
+        {
+            "next": END,
+            "end": END,
+        },
+    )
 
     return workflow.compile()
 
