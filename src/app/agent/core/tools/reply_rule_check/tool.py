@@ -64,99 +64,15 @@ class ReplyRuleCheckTool:
             )
 
         messages = conversation.get("messages", []) if isinstance(conversation, dict) else []
-        recent_self_messages = self._extract_recent_self_messages(messages)
-        pre_flags = self._detect_rule_flags(reply_text, recent_self_messages)
 
         try:
-            prompt_value = self.prompt.invoke(
-                {
-                    "reply_text": reply_text,
-                    "conversation_text": self._build_conversation_text(messages),
-                    "profile_text": self._build_profile_text(profile),
-                    "pre_flags": self._build_pre_flags_text(pre_flags),
-                }
-            )
+            output = self.evaluate_reply_text(reply_text, messages, profile)
 
-            structured_llm = self.llm.with_structured_output(ReplyRuleCheckResultSchema)
-            result = structured_llm.invoke(prompt_value)
-
-            rule_score = self._apply_hard_penalty(result.rule_score, pre_flags)
-            passed = result.passed and not self._has_critical_rule_violation(pre_flags)
-            should_regenerate = result.should_regenerate or not passed or rule_score < 70
-            reasons = list(result.reasons)
-            suggestions = list(result.improvement_suggestions)
-            violations = list(result.violations)
-
-            if pre_flags["multiple_questions"]:
-                reasons.append("質問が複数含まれており、返信ルールの『質問は1つまで』に抵触しています。")
-                suggestions.append(
-                    ImprovementSuggestionSchema(
-                        message="質問は最も返しやすい1つだけに絞ってください。",
-                        priority="high",
-                    )
-                )
-                violations.append("multiple_questions")
-
-            if pre_flags["missing_hook"]:
-                reasons.append("相手が返しやすいフックがなく、must ルールに抵触しています。")
-                suggestions.append(
-                    ImprovementSuggestionSchema(
-                        message="質問を1つ入れるか、相手が返しやすい具体的な話題提供を1つ追加してください。",
-                        priority="high",
-                    )
-                )
-                violations.append("missing_hook")
-
-            if pre_flags["repeated_point"]:
-                reasons.append("直近の自分の発言と同じ論点を繰り返しており、must ルールに抵触しています。")
-                suggestions.append(
-                    ImprovementSuggestionSchema(
-                        message="すでに伝えた共感や感想は繰り返さず、新しいリアクションか次の話題に進めてください。",
-                        priority="high",
-                    )
-                )
-                violations.append("repeated_point")
-
-            if pre_flags["banned_word"]:
-                reasons.append("禁止ワードを含んでいます。")
-                suggestions.append(
-                    ImprovementSuggestionSchema(
-                        message="『けっこう』『かなり』のような禁止ワードは別表現に置き換えてください。",
-                        priority="high",
-                    )
-                )
-                violations.append("banned_word")
-
-            if pre_flags["ambiguous_invite"]:
-                reasons.append("誘い文に具体的な日時条件が不足しており、提案が曖昧です。")
-                suggestions.append(
-                    ImprovementSuggestionSchema(
-                        message="候補日時や時間帯を具体的に示してください。",
-                        priority="high",
-                    )
-                )
-                violations.append("ambiguous_invite")
-
-            normalized_suggestions = merge_improvement_suggestions(
-                [],
-                suggestions,
-                default_priority="high",
-            )
-
-            output = {
-                "rule_score": rule_score,
-                "passed": passed,
-                "should_regenerate": should_regenerate,
-                "reasons": self._dedupe_list(reasons),
-                "improvement_suggestions": dump_improvement_suggestions(normalized_suggestions),
-                "violations": self._dedupe_list(violations),
-            }
-
-            scoped_canvas["reply_rule_score"] = rule_score
-            scoped_canvas["reply_rule_passed"] = passed
+            scoped_canvas["reply_rule_score"] = int(output["rule_score"])
+            scoped_canvas["reply_rule_passed"] = bool(output["passed"])
             scoped_canvas["reply_rule_reasons"] = output["reasons"]
             scoped_canvas["reply_should_regenerate"] = bool(
-                scoped_canvas.get("reply_should_regenerate", False) or should_regenerate
+                scoped_canvas.get("reply_should_regenerate", False) or output["should_regenerate"]
             )
 
             append_improvement_suggestions(
@@ -168,7 +84,7 @@ class ReplyRuleCheckTool:
             return BaseToolResult(
                 tool_name=self.name,
                 success=True,
-                summary="返信ルールを評価しました。" if passed else "返信ルール違反を検知し、再生成が必要と判定しました。",
+                summary="返信ルールを評価しました。" if output["passed"] else "返信ルール違反を検知し、再生成が必要と判定しました。",
                 tool_result=output,
             )
         except Exception as exc:
@@ -178,6 +94,99 @@ class ReplyRuleCheckTool:
                 summary=f"返信ルール評価中にエラーが発生しました: {str(exc)}",
                 tool_result={},
             )
+
+    def evaluate_reply_text(
+        self,
+        reply_text: str,
+        messages: list[dict[str, Any]],
+        profile: dict[str, Any],
+    ) -> dict[str, Any]:
+        recent_self_messages = self._extract_recent_self_messages(messages)
+        pre_flags = self._detect_rule_flags(reply_text, recent_self_messages)
+
+        prompt_value = self.prompt.invoke(
+            {
+                "reply_text": reply_text,
+                "conversation_text": self._build_conversation_text(messages),
+                "profile_text": self._build_profile_text(profile),
+                "pre_flags": self._build_pre_flags_text(pre_flags),
+            }
+        )
+
+        structured_llm = self.llm.with_structured_output(ReplyRuleCheckResultSchema)
+        result = structured_llm.invoke(prompt_value)
+
+        rule_score = self._apply_hard_penalty(result.rule_score, pre_flags)
+        passed = result.passed and not self._has_critical_rule_violation(pre_flags)
+        should_regenerate = result.should_regenerate or not passed or rule_score < 70
+        reasons = list(result.reasons)
+        suggestions = list(result.improvement_suggestions)
+        violations = list(result.violations)
+
+        if pre_flags["multiple_questions"]:
+            reasons.append("質問が複数含まれており、返信ルールの『質問は1つまで』に抵触しています。")
+            suggestions.append(
+                ImprovementSuggestionSchema(
+                    message="質問は最も返しやすい1つだけに絞ってください。",
+                    priority="high",
+                )
+            )
+            violations.append("multiple_questions")
+
+        if pre_flags["missing_hook"]:
+            reasons.append("相手が返しやすいフックがなく、must ルールに抵触しています。")
+            suggestions.append(
+                ImprovementSuggestionSchema(
+                    message="質問を1つ入れるか、相手が返しやすい具体的な話題提供を1つ追加してください。",
+                    priority="high",
+                )
+            )
+            violations.append("missing_hook")
+
+        if pre_flags["repeated_point"]:
+            reasons.append("直近の自分の発言と同じ論点を繰り返しており、must ルールに抵触しています。")
+            suggestions.append(
+                ImprovementSuggestionSchema(
+                    message="すでに伝えた共感や感想は繰り返さず、新しいリアクションか次の話題に進めてください。",
+                    priority="high",
+                )
+            )
+            violations.append("repeated_point")
+
+        if pre_flags["banned_word"]:
+            reasons.append("禁止ワードを含んでいます。")
+            suggestions.append(
+                ImprovementSuggestionSchema(
+                    message="『けっこう』『かなり』のような禁止ワードは別表現に置き換えてください。",
+                    priority="high",
+                )
+            )
+            violations.append("banned_word")
+
+        if pre_flags["ambiguous_invite"]:
+            reasons.append("誘い文に具体的な日時条件が不足しており、提案が曖昧です。")
+            suggestions.append(
+                ImprovementSuggestionSchema(
+                    message="候補日時や時間帯を具体的に示してください。",
+                    priority="high",
+                )
+            )
+            violations.append("ambiguous_invite")
+
+        normalized_suggestions = merge_improvement_suggestions(
+            [],
+            suggestions,
+            default_priority="high",
+        )
+
+        return {
+            "rule_score": rule_score,
+            "passed": passed,
+            "should_regenerate": should_regenerate,
+            "reasons": self._dedupe_list(reasons),
+            "improvement_suggestions": dump_improvement_suggestions(normalized_suggestions),
+            "violations": self._dedupe_list(violations),
+        }
 
     def _get_prompt_path(self) -> Path:
         return Path(__file__).resolve().parent / "prompt.yaml"

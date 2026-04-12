@@ -134,6 +134,56 @@ class ConversationWordClassification(TypedDict, total=False):
     function_terms: list[ClassifiedConversationTerm]
 
 
+ReplyCandidateThemeId = Literal[
+    "question_continue",
+    "question_shift",
+    "topic_continue",
+    "topic_shift",
+]
+
+
+class ImprovementSuggestion(TypedDict, total=False):
+    message: str
+    priority: Literal["low", "medium", "high"]
+
+
+class CandidateSafetyCheck(TypedDict, total=False):
+    safety_ok: bool
+    should_regenerate: bool
+    reasons: list[str]
+    improvement_suggestions: list[ImprovementSuggestion]
+    detected_risks: list[str]
+
+
+class CandidateRuleCheck(TypedDict, total=False):
+    passed: bool
+    should_regenerate: bool
+    rule_score: int
+    reasons: list[str]
+    improvement_suggestions: list[ImprovementSuggestion]
+    violations: list[str]
+
+
+class ReplyCandidate(TypedDict, total=False):
+    candidate_id: str
+    theme_id: ReplyCandidateThemeId
+    theme_label: str
+    reply_text: str
+    reasoning: str
+    safety_check: CandidateSafetyCheck
+    rule_check: CandidateRuleCheck
+    final_score: int
+    rank: int
+    selected: bool
+
+
+class ReplySelectionSummary(TypedDict, total=False):
+    selected_candidate_id: str
+    selected_theme_id: ReplyCandidateThemeId
+    selection_reason: str
+    evaluated_candidate_count: int
+
+
 # ============================================
 # Canvas: プロセス内で更新される成果物
 # ============================================
@@ -150,6 +200,14 @@ class Canvas(TypedDict, total=False):
     generated_reply: str
     # 返信内容を作成した理由
     reply_reasoning: str
+    # 複数の返信候補
+    reply_candidates: list[ReplyCandidate]
+    # 最終採用した返信候補ID
+    selected_reply_candidate_id: str
+    # 候補選抜の理由
+    reply_selection_reason: str
+    # 候補選抜の要約
+    reply_selection_summary: ReplySelectionSummary
 
     # -----------------------------------
     # 出力に対する評価
@@ -158,8 +216,8 @@ class Canvas(TypedDict, total=False):
     fit_score: int
     # プロフィール/性格との合致度スコア(0-100)。に対する理由
     reasons: list[str]
-    # 返信文のプロフィール適合度に基づく改善提案
-    improvement_suggestions: list[dict[str, str]]
+    # 最終採用候補に対する改善提案
+    improvement_suggestions: list[ImprovementSuggestion]
     current_action_loop_count: int
 
     # -----------------------------------

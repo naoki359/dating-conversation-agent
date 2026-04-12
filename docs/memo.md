@@ -19,6 +19,35 @@ uv run python scripts/eval_score_reply_quality.py --cases eval/score_reply_quali
 gh issue create --title "[BUG] モジュールグローバルな値の取り扱い方法検討" --body-file ".\docs\issues\011_issue.md"
 ```
 
+### 修正の退避（git stash）
+
+修正を退避する
+```bash
+git stash -u -m "ワークフローを事前定義型に変更する" 
+```
+
+- `-u` 未追跡のファイルも対象とする
+- `-m` メッセージ付与
+
+退避履歴を確認する
+```bash
+git stash list
+```
+
+退避した修正を戻す
+```bash
+git stash apply "stash@{0}"
+```
+
+### コミットを消す（git reset）
+
+最新のコミットを消す
+```bash
+git reset --soft HEAD~1  
+```
+
+- `--soft` ソースは残す
+
 ## 課題
 
 ### 📊 テストデータ・会話品質

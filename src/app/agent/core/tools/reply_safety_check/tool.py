@@ -65,74 +65,13 @@ class ReplySafetyCheckTool:
                 tool_result={},
             )
 
-        pre_flags = self._detect_risks(reply_text)
-
         try:
-            prompt_value = self.prompt.invoke(
-                {
-                    "reply_text": reply_text,
-                    "conversation_text": self._build_conversation_text(messages),
-                    "pre_flags": self._build_pre_flags_text(pre_flags),
-                }
-            )
+            output = self.evaluate_reply_text(reply_text, messages)
 
-            structured_llm = self.llm.with_structured_output(ReplySafetyCheckResultSchema)
-            result = structured_llm.invoke(prompt_value)
-
-            safety_ok = result.safety_ok and not self._has_critical_flag(pre_flags)
-            should_regenerate = result.should_regenerate or not safety_ok
-            reasons = list(result.reasons)
-            suggestions = list(result.improvement_suggestions)
-            detected_risks = list(result.detected_risks)
-
-            if pre_flags["sexual_risk"]:
-                reasons.append("性的な示唆または過度な下ネタのリスクを検知しました。")
-                suggestions.append(
-                    ImprovementSuggestionSchema(
-                        message="性的な含みを完全に外し、安心感のある話題に置き換えてください。",
-                        priority="high",
-                    )
-                )
-                detected_risks.append("sexual")
-
-            if pre_flags["hurtful_risk"]:
-                reasons.append("侮辱的または相手を傷つける表現のリスクを検知しました。")
-                suggestions.append(
-                    ImprovementSuggestionSchema(
-                        message="否定や攻撃ではなく、相手を尊重する表現に修正してください。",
-                        priority="high",
-                    )
-                )
-                detected_risks.append("hurtful")
-
-            if pre_flags["pressuring_risk"]:
-                reasons.append("相手に圧をかける表現のリスクを検知しました。")
-                suggestions.append(
-                    ImprovementSuggestionSchema(
-                        message="相手が断りやすい余白を残した誘い方に修正してください。",
-                        priority="high",
-                    )
-                )
-                detected_risks.append("pressuring")
-
-            normalized_suggestions = merge_improvement_suggestions(
-                [],
-                suggestions,
-                default_priority="high",
-            )
-
-            output = {
-                "safety_ok": safety_ok,
-                "should_regenerate": should_regenerate,
-                "reasons": self._dedupe_list(reasons),
-                "improvement_suggestions": dump_improvement_suggestions(normalized_suggestions),
-                "detected_risks": self._dedupe_list(detected_risks),
-            }
-
-            scoped_canvas["reply_safety_ok"] = safety_ok
+            scoped_canvas["reply_safety_ok"] = bool(output["safety_ok"])
             scoped_canvas["reply_safety_reasons"] = output["reasons"]
             scoped_canvas["reply_should_regenerate"] = bool(
-                scoped_canvas.get("reply_should_regenerate", False) or should_regenerate
+                scoped_canvas.get("reply_should_regenerate", False) or output["should_regenerate"]
             )
             append_improvement_suggestions(
                 scoped_canvas,
@@ -143,7 +82,7 @@ class ReplySafetyCheckTool:
             return BaseToolResult(
                 tool_name=self.name,
                 success=True,
-                summary="返信の安全性を確認しました。" if safety_ok else "返信に安全性の問題があり、再生成が必要と判定しました。",
+                summary="返信の安全性を確認しました。" if output["safety_ok"] else "返信に安全性の問題があり、再生成が必要と判定しました。",
                 tool_result=output,
             )
         except Exception as exc:
@@ -153,6 +92,74 @@ class ReplySafetyCheckTool:
                 summary=f"返信安全性チェック中にエラーが発生しました: {str(exc)}",
                 tool_result={},
             )
+
+    def evaluate_reply_text(
+        self,
+        reply_text: str,
+        messages: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        pre_flags = self._detect_risks(reply_text)
+
+        prompt_value = self.prompt.invoke(
+            {
+                "reply_text": reply_text,
+                "conversation_text": self._build_conversation_text(messages),
+                "pre_flags": self._build_pre_flags_text(pre_flags),
+            }
+        )
+
+        structured_llm = self.llm.with_structured_output(ReplySafetyCheckResultSchema)
+        result = structured_llm.invoke(prompt_value)
+
+        safety_ok = result.safety_ok and not self._has_critical_flag(pre_flags)
+        should_regenerate = result.should_regenerate or not safety_ok
+        reasons = list(result.reasons)
+        suggestions = list(result.improvement_suggestions)
+        detected_risks = list(result.detected_risks)
+
+        if pre_flags["sexual_risk"]:
+            reasons.append("性的な示唆または過度な下ネタのリスクを検知しました。")
+            suggestions.append(
+                ImprovementSuggestionSchema(
+                    message="性的な含みを完全に外し、安心感のある話題に置き換えてください。",
+                    priority="high",
+                )
+            )
+            detected_risks.append("sexual")
+
+        if pre_flags["hurtful_risk"]:
+            reasons.append("侮辱的または相手を傷つける表現のリスクを検知しました。")
+            suggestions.append(
+                ImprovementSuggestionSchema(
+                    message="否定や攻撃ではなく、相手を尊重する表現に修正してください。",
+                    priority="high",
+                )
+            )
+            detected_risks.append("hurtful")
+
+        if pre_flags["pressuring_risk"]:
+            reasons.append("相手に圧をかける表現のリスクを検知しました。")
+            suggestions.append(
+                ImprovementSuggestionSchema(
+                    message="相手が断りやすい余白を残した誘い方に修正してください。",
+                    priority="high",
+                )
+            )
+            detected_risks.append("pressuring")
+
+        normalized_suggestions = merge_improvement_suggestions(
+            [],
+            suggestions,
+            default_priority="high",
+        )
+
+        return {
+            "safety_ok": safety_ok,
+            "should_regenerate": should_regenerate,
+            "reasons": self._dedupe_list(reasons),
+            "improvement_suggestions": dump_improvement_suggestions(normalized_suggestions),
+            "detected_risks": self._dedupe_list(detected_risks),
+        }
 
     def _get_prompt_path(self) -> Path:
         return Path(__file__).resolve().parent / "prompt.yaml"

@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 _VALID_DATA_SOURCES = {"test", "prod"}
+_VALID_PIPELINE_MODES = {"fixed", "react"}
 _DATA_SOURCE_DIR_MAP = {
     "test": "test_user",
     "prod": "user",
@@ -37,6 +38,9 @@ class Settings:
         "AGENT_CONSOLE_USE_LLM", "false"
     ).lower() == "true"
 
+    # ========= ⑥ 実行パイプライン =========
+    AGENT_PIPELINE_MODE: str = os.getenv("AGENT_PIPELINE_MODE", "fixed")
+
     @classmethod
     def get_data_dir(cls) -> Path:
         project_root = Path(__file__).resolve().parents[5]
@@ -51,4 +55,9 @@ class Settings:
             raise ValueError(
                 f"DATA_SOURCE の値が不正です: '{cls.DATA_SOURCE}' "
                 f"(有効な値: {', '.join(sorted(_VALID_DATA_SOURCES))})"
+            )
+        if cls.AGENT_PIPELINE_MODE not in _VALID_PIPELINE_MODES:
+            raise ValueError(
+                f"AGENT_PIPELINE_MODE の値が不正です: '{cls.AGENT_PIPELINE_MODE}' "
+                f"(有効な値: {', '.join(sorted(_VALID_PIPELINE_MODES))})"
             )
