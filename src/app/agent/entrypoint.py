@@ -24,7 +24,7 @@ class ReplyResponse(BaseModel):
     reply_reasoning: Optional[str] = None
 
 
-@lru_cache(maxsize=1)
+# @lru_cache(maxsize=1)
 def get_graph():
     print("get_graph() called")
     return build_graph()
@@ -38,12 +38,16 @@ def health_check():
 @app.post("/reply", response_model=ReplyResponse)
 def generate_reply(request: ReplyRequest):
     print(f"{request.id}への返信を生成します")
+
+    # リクエスト毎にユニークなexecution_idを生成し、実行用のバケットを作成
     execution_id = str(uuid.uuid4())
     create_execution_bucket(execution_id, user_id=request.id)
 
+    # グラフの生成
     graph = get_graph()
 
     try:
+        # グラフを実行して返信を生成
         graph.invoke(
             {
                 "user_id": request.id,
@@ -52,10 +56,12 @@ def generate_reply(request: ReplyRequest):
             config={"recursion_limit": 100},
         )
 
+        # 作成した返信を取得して返却する
         canvas = get_shared_canvas(execution_id)
         return ReplyResponse(
             generated_reply=str(canvas.get("generated_reply", "")),
             reply_reasoning=str(canvas.get("reply_reasoning", "")),
         )
     finally:
+        # バケットの削除
         destroy_execution_bucket(execution_id)

@@ -269,6 +269,8 @@ def _build_initial_store(user_id: str | None = None) -> SourceData:
     return store
 
 
+# 古いバケットをクリーンアップする関数。
+# 指定された TTL（有効期限）を超えてアクセスされていないバケットを削除します。
 def _cleanup_stale_buckets_unlocked(ttl_seconds: int = BUCKET_TTL_SECONDS) -> int:
     now = time()
     stale_ids = [
@@ -288,6 +290,8 @@ def cleanup_stale_buckets(ttl_seconds: int = BUCKET_TTL_SECONDS) -> int:
         return _cleanup_stale_buckets_unlocked(ttl_seconds)
 
 
+# バケットの容量を確保する関数。
+# バケットの数が最大値を超えた場合、最も古いバケットを削除します。
 def _ensure_capacity_unlocked() -> None:
     if len(_buckets) < MAX_BUCKETS:
         return
@@ -299,21 +303,36 @@ def _ensure_capacity_unlocked() -> None:
     _buckets.pop(oldest_id, None)
 
 
+# 実行バケットを作成する関数
+# execution_idごとに状態（storeやcanvasなど）を管理する箱を作る
 def create_execution_bucket(execution_id: str, user_id: str | None = None) -> None:
-    now = time()
+    now = time()  # 現在時刻を取得（作成時間・アクセス時間に使う）
+
+    # ロックをかけてこの中の処理を同時に1つのスレッドだけが実行できるようにする
+    # → データの競合（壊れること）を防ぐため
     with _bucket_lock:
+        # 古くなった不要なバケットを削除する（メモリ節約・リーク防止）
         _cleanup_stale_buckets_unlocked()
+        # バケット数が上限を超えないように調整する（容量管理）
         _ensure_capacity_unlocked()
+        # 新しいバケットを作成して登録する
         _buckets[execution_id] = _ExecutionBucket(
+            # 初期状態のデータを作成（ユーザー情報などを元に）
             store=_build_initial_store(user_id=user_id),
+            # 出力結果などを保持する領域（最初は空）
             canvas={},
+            # 作成時刻
             created_at=now,
+            # 最後にアクセスされた時刻（初回は作成時と同じ）
             last_accessed_at=now,
         )
 
-
+# バケットを削除する関数
 def destroy_execution_bucket(execution_id: str) -> None:
+    # ロックをかけて安全に操作する（同時アクセス防止）
     with _bucket_lock:
+        # 指定されたexecution_idのバケットを削除する
+        # 存在しなくてもエラーにならないようにNoneを指定している
         _buckets.pop(execution_id, None)
 
 
@@ -355,7 +374,7 @@ def _get_bucket(execution_id: str | None = None) -> _ExecutionBucket:
 def get_shared_store(execution_id: str | None = None) -> SourceData:
     return _get_bucket(execution_id).store
 
-
+# 実行IDを基に共有キャンバスを取得する関数
 def get_shared_canvas(execution_id: str | None = None) -> Canvas:
     return _get_bucket(execution_id).canvas
 
