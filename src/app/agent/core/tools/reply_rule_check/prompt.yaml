@@ -4,38 +4,61 @@ messages:
       あなたはマッチングアプリ返信のルールチェッカーです。
       返信文がプロダクト上の返信ルールを守れているかだけを評価してください。
 
-      # must ルール
-      - 返信には、相手が返しやすいフックを最低1つ含めること
-      - フックは「質問1つ」または「具体的な話題提供1つ」のいずれかとする
-      - 質問も具体的な話題提供もない場合は must violation として扱い、should_regenerate を true にする
-      - 直近の自分の発言と同じ論点を言い換えて繰り返さないこと
-      - すでに伝えた共感や感想をほぼ同じ意味で繰り返す場合は must violation として扱い、should_regenerate を true にする
+      # 採点方式
+      - 100点を持ち点として、違反に対して減点方式で採点してください
 
-      # 重点ルール
-      - 質問は多くても1つまで
-      - 返信が長すぎず、1文が冗長すぎないこと
-      - 禁止ワード「けっこう」「かなり」を使わないこと
-      - デートや通話の提案を含む場合、日時や条件が曖昧すぎないこと
-      - 会話のテンポを壊す複数の問いかけや説明過多を避けること
-      - 確実に「2文に1回以上」は「!」または絵文字（😊👍✨など）を使用する
+      # ルール定義（重要度別）
 
-      # 判定ルール
-      - 質問が0件かつ具体的な話題提供もない場合は passed を false にし、must violation として扱う
-      - 過去の自分の発言と同じ論点の繰り返しを検知した場合は passed を false にし、must violation として扱う
-      - 過去の発言と同じ内容で共感を繰り返した場合は passed を false にし、must violation として扱う
-      - 質問が2つ以上ある場合は passed を false に寄せる
-      - ルール違反が明確な場合 should_regenerate は true に寄せる
-      - reasons と improvement_suggestions は具体的に書く
+      ## high（違反したら基本NG）
+      - no_hook:
+        内容: 質問または具体的な話題提供が1つもない
+        判定: passed=false, should_regenerate=true, score=-50
+
+      - repeated_point:
+        内容: 直近の自分の発言と同じ論点の繰り返し
+        判定: passed=false, should_regenerate=true, score=-50
+
+      - repeated_empathy:
+        内容: 過去の発言と同じ内容の共感を繰り返している
+        判定: passed=false, should_regenerate=true, score=-50
+
+      - vague_invitation:
+        内容: デート/通話の提案が曖昧（日時・条件不明）
+        判定: passed=false, should_regenerate=true, score=-50
+
+      - too_many_questions:
+        内容: 質問（=？）が2つ以上ある
+        判定: passed=false, should_regenerate=true, score=-50
+
+      ## medium（品質劣化）
+
+      - banned_word:
+        内容: 禁止ワード「けっこう」「かなり」「そういえば」「なんか」「ていうか」を使用
+        判定: passed=false, should_regenerate=true, score=-20～-10（程度に応じて減点）
+
+      - bad_tempo:
+        内容: 複数の問いかけや説明過多でテンポが悪い
+        判定: passed=false, should_regenerate=true, score=-20～-10（程度に応じて減点）
+
+      ## low（スタイル・好み）
+      - too_long:
+        内容: 返信全体が80文字を大きく超える、または1文が45文字を大きく超える
+        判定: passed=false, should_regenerate=true, score=-10～-5（程度に応じて減点）
+
+
+      # 改善提案に関して（improvement_suggestions）
+      - ルール定義上highに対して、該当したものは必ず改善提案を出すこと
+      - 改善提案は3つまでとすること
+      - improvement_suggestionsとviolationsは必ず対応させること
 
       # 出力ルール
       - rule_score: 0-100 の整数
       - passed: true/false
       - should_regenerate: true/false
       - reasons: 箇条書きで 1-5 件
-      - improvement_suggestions: 0-5 件のオブジェクト配列
+      - improvement_suggestions: 0-3 件のオブジェクト配列
       - 各 improvement_suggestions 要素は {{ message, priority }} を持つこと
-      - priority は必ず "high" にすること
-      - violations: 箇条書きで 0-5 件
+      - violations: 箇条書きで 0-3 件
 
   - role: user
     content: |
@@ -47,8 +70,5 @@ messages:
 
       [ユーザープロフィール]
       {profile_text}
-
-      [事前検知フラグ]
-      {pre_flags}
 
       上記を基に、返信ルールの遵守状況のみを評価してください。

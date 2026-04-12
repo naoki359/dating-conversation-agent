@@ -109,69 +109,69 @@ class ReplyRuleCheckTool:
                 "reply_text": reply_text,
                 "conversation_text": self._build_conversation_text(messages),
                 "profile_text": self._build_profile_text(profile),
-                "pre_flags": self._build_pre_flags_text(pre_flags),
+                # "pre_flags": self._build_pre_flags_text(pre_flags),
             }
         )
 
         structured_llm = self.llm.with_structured_output(ReplyRuleCheckResultSchema)
         result = structured_llm.invoke(prompt_value)
 
-        rule_score = self._apply_hard_penalty(result.rule_score, pre_flags)
+        rule_score = result.rule_score
         passed = result.passed and not self._has_critical_rule_violation(pre_flags)
         should_regenerate = result.should_regenerate or not passed or rule_score < 70
         reasons = list(result.reasons)
         suggestions = list(result.improvement_suggestions)
         violations = list(result.violations)
 
-        if pre_flags["multiple_questions"]:
-            reasons.append("質問が複数含まれており、返信ルールの『質問は1つまで』に抵触しています。")
-            suggestions.append(
-                ImprovementSuggestionSchema(
-                    message="質問は最も返しやすい1つだけに絞ってください。",
-                    priority="high",
-                )
-            )
-            violations.append("multiple_questions")
+        # if pre_flags["multiple_questions"]:
+        #     reasons.append("質問が複数含まれており、返信ルールの『質問は1つまで』に抵触しています。")
+        #     suggestions.append(
+        #         ImprovementSuggestionSchema(
+        #             message="質問は最も返しやすい1つだけに絞ってください。",
+        #             priority="high",
+        #         )
+        #     )
+        #     violations.append("multiple_questions")
 
-        if pre_flags["missing_hook"]:
-            reasons.append("相手が返しやすいフックがなく、must ルールに抵触しています。")
-            suggestions.append(
-                ImprovementSuggestionSchema(
-                    message="質問を1つ入れるか、相手が返しやすい具体的な話題提供を1つ追加してください。",
-                    priority="high",
-                )
-            )
-            violations.append("missing_hook")
+        # if pre_flags["missing_hook"]:
+        #     reasons.append("相手が返しやすいフックがなく、must ルールに抵触しています。")
+        #     suggestions.append(
+        #         ImprovementSuggestionSchema(
+        #             message="質問を1つ入れるか、相手が返しやすい具体的な話題提供を1つ追加してください。",
+        #             priority="high",
+        #         )
+        #     )
+        #     violations.append("missing_hook")
 
-        if pre_flags["repeated_point"]:
-            reasons.append("直近の自分の発言と同じ論点を繰り返しており、must ルールに抵触しています。")
-            suggestions.append(
-                ImprovementSuggestionSchema(
-                    message="すでに伝えた共感や感想は繰り返さず、新しいリアクションか次の話題に進めてください。",
-                    priority="high",
-                )
-            )
-            violations.append("repeated_point")
+        # if pre_flags["repeated_point"]:
+        #     reasons.append("直近の自分の発言と同じ論点を繰り返しており、must ルールに抵触しています。")
+        #     suggestions.append(
+        #         ImprovementSuggestionSchema(
+        #             message="すでに伝えた共感や感想は繰り返さず、新しいリアクションか次の話題に進めてください。",
+        #             priority="high",
+        #         )
+        #     )
+        #     violations.append("repeated_point")
 
-        if pre_flags["banned_word"]:
-            reasons.append("禁止ワードを含んでいます。")
-            suggestions.append(
-                ImprovementSuggestionSchema(
-                    message="『けっこう』『かなり』のような禁止ワードは別表現に置き換えてください。",
-                    priority="high",
-                )
-            )
-            violations.append("banned_word")
+        # if pre_flags["banned_word"]:
+        #     reasons.append("禁止ワードを含んでいます。")
+        #     suggestions.append(
+        #         ImprovementSuggestionSchema(
+        #             message="『けっこう』『かなり』のような禁止ワードは別表現に置き換えてください。",
+        #             priority="high",
+        #         )
+        #     )
+        #     violations.append("banned_word")
 
-        if pre_flags["ambiguous_invite"]:
-            reasons.append("誘い文に具体的な日時条件が不足しており、提案が曖昧です。")
-            suggestions.append(
-                ImprovementSuggestionSchema(
-                    message="候補日時や時間帯を具体的に示してください。",
-                    priority="high",
-                )
-            )
-            violations.append("ambiguous_invite")
+        # if pre_flags["ambiguous_invite"]:
+        #     reasons.append("誘い文に具体的な日時条件が不足しており、提案が曖昧です。")
+        #     suggestions.append(
+        #         ImprovementSuggestionSchema(
+        #             message="候補日時や時間帯を具体的に示してください。",
+        #             priority="high",
+        #         )
+        #     )
+        #     violations.append("ambiguous_invite")
 
         normalized_suggestions = merge_improvement_suggestions(
             [],
@@ -190,10 +190,16 @@ class ReplyRuleCheckTool:
 
     def _get_prompt_path(self) -> Path:
         return Path(__file__).resolve().parent / "prompt.yaml"
-
+    
+    # 返信文と会話履歴の静的な調査
     def _detect_rule_flags(self, reply_text: str, recent_self_messages: list[str]) -> dict[str, bool]:
+        # 質問数カウント（全角半角両方の疑問符を考慮）
         question_count = reply_text.count("?") + reply_text.count("？")
+
+        # 禁止ワードの検出や誘い文の特徴を捉えるために、正規化したテキストを用いる
         normalized = reply_text.lower()
+
+        # デート打診か検知するためのキーワードと、具体的な日時条件の有無をチェック
         looks_like_invite = any(keyword in reply_text for keyword in ["会", "飲", "ランチ", "ディナー", "通話", "電話"])
         has_specific_time = any(token in reply_text for token in ["時", "日", "土", "日曜", "平日", "来週", "今週", "午後", "夜"])
         has_topic_hook = self._has_topic_hook(reply_text)
@@ -215,19 +221,19 @@ class ReplyRuleCheckTool:
             or pre_flags.get("ambiguous_invite")
         )
 
-    def _apply_hard_penalty(self, score: int, pre_flags: dict[str, bool]) -> int:
-        adjusted = max(0, min(100, score))
-        if pre_flags.get("missing_hook"):
-            adjusted = min(adjusted, 40)
-        if pre_flags.get("repeated_point"):
-            adjusted = min(adjusted, 35)
-        if pre_flags.get("multiple_questions"):
-            adjusted = min(adjusted, 60)
-        if pre_flags.get("banned_word"):
-            adjusted = min(adjusted, 55)
-        if pre_flags.get("ambiguous_invite"):
-            adjusted = min(adjusted, 60)
-        return adjusted
+    # def _apply_hard_penalty(self, score: int, pre_flags: dict[str, bool]) -> int:
+    #     adjusted = max(0, min(100, score))
+    #     if pre_flags.get("missing_hook"):
+    #         adjusted = min(adjusted, 40)
+    #     if pre_flags.get("repeated_point"):
+    #         adjusted = min(adjusted, 35)
+    #     if pre_flags.get("multiple_questions"):
+    #         adjusted = min(adjusted, 60)
+    #     if pre_flags.get("banned_word"):
+    #         adjusted = min(adjusted, 55)
+    #     if pre_flags.get("ambiguous_invite"):
+    #         adjusted = min(adjusted, 60)
+    #     return adjusted
 
     def _build_profile_text(self, profile: dict[str, Any]) -> str:
         if not profile:
@@ -277,7 +283,8 @@ class ReplyRuleCheckTool:
                 f"- ambiguous_invite: {pre_flags.get('ambiguous_invite', False)}",
             ]
         )
-
+    
+    # 直近のメッセージを取得するが、相手のメッセージは除外して自分のメッセージだけを対象とする
     def _extract_recent_self_messages(self, messages: list[dict[str, Any]]) -> list[str]:
         self_messages: list[str] = []
         for msg in messages:
