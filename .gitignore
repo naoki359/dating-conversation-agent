@@ -20,6 +20,7 @@ logs/
 
 # data
 /data/user
+/data/response
 
 # docs
 /docs/issues
