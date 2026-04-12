@@ -44,20 +44,25 @@ class GenerateReplyCandidatesTool(GenerateReplyTool):
         self.prompt = load_prompt_from_yaml(self._get_prompt_path())
 
     def execute(self, execution_id: str | None = None) -> BaseToolResult:
+        # execution_idを基に共有ストアとキャンバスを取得する
         scoped_store = get_shared_store(execution_id)
         scoped_canvas = get_shared_canvas(execution_id)
+
+        # 実行に必要な情報の取得
         self_profile = scoped_store.get("self_profile", {})
         profile = scoped_store.get("profile", {})
         conversation = scoped_store.get("conversation", {})
         messages = conversation.get("messages", [])
         conversation_facts = scoped_canvas.get("conversation_facts", {})
 
+        # 相手の最新メッセージを取得
         latest_message = None
         for msg in reversed(messages):
             if msg.get("sender") == "other":
                 latest_message = msg
                 break
 
+        # プロンプトに渡すための入力データを構築
         input_payload = {
             "self_profile_text": self._build_self_profile_text(self_profile),
             "profile_text": self._build_profile_text(profile),

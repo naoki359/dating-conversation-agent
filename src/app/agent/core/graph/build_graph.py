@@ -82,6 +82,8 @@ def build_react_graph():
     return workflow.compile()
 
 
+# ReActのDecisionとObserveを省略し、固定のツールを順番に実行するシンプルなグラフを構築する関数
+# 既存のノードやツールの構成を崩すことなくワークフローのみ再構築
 def build_fixed_graph():
     workflow = StateGraph(ReactState)
 
