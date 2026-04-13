@@ -17,6 +17,12 @@ class ImprovementSuggestionSchema(BaseModel):
         description="指摘の優先度。high, medium, low のいずれか。",
     )
 
+    alternative_text: str = Field(
+        ...,
+        description="指摘事項に対しての代替となるテキスト。",
+    )
+
+
 
 _PRIORITY_RANK: dict[FeedbackPriority, int] = {
     "high": 3,

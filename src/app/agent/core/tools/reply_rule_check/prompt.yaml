@@ -30,6 +30,10 @@ messages:
         内容: 質問（=？）が2つ以上ある
         判定: passed=false, should_regenerate=true, score=-50
 
+      - discomfort:
+        内容: 「〇〇ですし、△△です」という構文は、違和感があるため使用しないこと
+        判定: passed=false, should_regenerate=true, score=-50
+
       ## medium（品質劣化）
 
       - banned_word:
@@ -38,6 +42,10 @@ messages:
 
       - bad_tempo:
         内容: 複数の問いかけや説明過多でテンポが悪い
+        判定: passed=false, should_regenerate=true, score=-20～-10（程度に応じて減点）
+
+      - period_too_many:
+        内容: 「、」の数が返信の中で2つ以上存在した場合。もしくは不適切な位置に置かれている場合
         判定: passed=false, should_regenerate=true, score=-20～-10（程度に応じて減点）
 
       ## low（スタイル・好み）
@@ -59,6 +67,7 @@ messages:
       - improvement_suggestions: 0-3 件のオブジェクト配列
       - 各 improvement_suggestions 要素は {{ message, priority }} を持つこと
       - violations: 箇条書きで 0-3 件
+      - 指摘事項に対しては必ず代替となるテキストを提示すること
 
   - role: user
     content: |
