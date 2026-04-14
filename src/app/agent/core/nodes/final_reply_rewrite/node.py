@@ -13,6 +13,7 @@ from app.agent.core.nodes.final_reply_rewrite.schema import (
 from app.agent.core.schemas.base_output_schema import BaseOutputSchema
 from app.agent.core.schemas.state import ReactState
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
+from app.agent.core.utils.formatCommon import format_conversation_text
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
@@ -118,14 +119,4 @@ class FinalReplyRewriteNode(BaseNode):
         return Path(__file__).resolve().parent / "prompt.yaml"
 
     def _build_conversation_text(self, messages: list[dict]) -> str:
-        if not messages:
-            return "会話履歴はありません。"
-
-        lines: list[str] = []
-        for message in messages:
-            sender = str(message.get("sender", ""))
-            sender_label = "相手" if sender == "other" else "自分"
-            body = str(message.get("message", "")).strip()
-            lines.append(f"{sender_label}: {body}")
-
-        return dedent("\n".join(lines)).strip()
+        return format_conversation_text(messages, strip_message=True)

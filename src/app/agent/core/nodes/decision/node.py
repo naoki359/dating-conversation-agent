@@ -9,13 +9,14 @@ from app.agent.core.nodes.decision.schema import DecisionOutputSchema
 from app.agent.core.schemas.base_output_schema import BaseOutputSchema
 from app.agent.core.schemas.state import ReactState
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
+from app.agent.core.utils.formatCommon import (
+    format_conversation_with_metadata,
+    format_profile_text,
+)
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.config.settings import Settings
 from app.agent.core.nodes.action.tool_enum import ToolEnum
-from app.agent.core.utils.shared_store import (
-    DEFAULT_MEETING_TIMING_PREFERENCE,
-    get_shared_store,
-)
+from app.agent.core.utils.shared_store import get_shared_store
 
 
 class DecisionNode(BaseNode):
@@ -68,70 +69,15 @@ class DecisionNode(BaseNode):
 
     def _build_profile_text(self, execution_id: str | None) -> str:
         profile = get_shared_store(execution_id).get("profile", {})
-
-        name = profile.get("name", "")
-        age = profile.get("age", "")
-        raw_profile_text = profile.get("raw_profile_text", "")
-        profile_summary = profile.get("profile_summary", "")
-        meeting_timing_preference = (
-            profile.get("meeting_timing_preference")
-            or DEFAULT_MEETING_TIMING_PREFERENCE
+        return format_profile_text(
+            profile,
+            basic_info_header="[プロフィール基本情報]",
+            include_raw_profile_text=True,
         )
-
-        return dedent(
-            f"""
-            [プロフィール基本情報]
-            名前: {name}
-            年齢: {age}
-            出会うまでの希望: {meeting_timing_preference}
-
-            [プロフィール要約]
-            {profile_summary}
-
-            [プロフィール原文]
-            {raw_profile_text}
-            """
-        ).strip()
 
     def _build_conversation_text(self, execution_id: str | None) -> str:
         conversation = get_shared_store(execution_id).get("conversation", {})
-        messages = conversation.get("messages", [])
-
-        if not messages:
-            return "会話履歴はありません。"
-
-        lines: list[str] = []
-        for msg in messages:
-            message_id = msg.get("id", "")
-            timestamp = msg.get("timestamp", "")
-            sender = msg.get("sender", "")
-            message = msg.get("message", "")
-
-            lines.append(
-                dedent(
-                    f"""
-                    - id: {message_id}
-                      timestamp: {timestamp}
-                      sender: {sender}
-                      message:
-                    {self._indent_block(message, 4)}
-                    """
-                ).rstrip()
-            )
-
-        updated_at = conversation.get("updated_at", "")
-
-        history_text = "\n".join(lines)
-
-        return dedent(
-            f"""
-            [会話更新日時]
-            {updated_at}
-
-            [会話履歴]
-            {history_text}
-            """
-        ).strip()
+        return format_conversation_with_metadata(conversation)
 
     def _build_past_thought_process_text(self, state: ReactState) -> str:
         history = state.get("history", [])
@@ -166,12 +112,6 @@ class DecisionNode(BaseNode):
 
         return "\n\n".join(blocks)
 
-    @staticmethod
-    def _indent_block(text: str, spaces: int) -> str:
-        indent = " " * spaces
-        lines = text.splitlines() or [text]
-        return "\n".join(f"{indent}{line}" for line in lines)
-    
     def _build_tools_info(self) -> str:
         """利用可能なツールの情報を構築する"""
         lines = []

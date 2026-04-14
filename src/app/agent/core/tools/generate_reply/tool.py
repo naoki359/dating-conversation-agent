@@ -5,12 +5,13 @@ from typing import Any
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.tools.generate_reply.schema import GenerateReplyResultSchema
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
-from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
-from app.agent.core.utils.shared_store import (
-    DEFAULT_MEETING_TIMING_PREFERENCE,
-    get_shared_canvas,
-    get_shared_store,
+from app.agent.core.utils.formatCommon import (
+    format_conversation_text,
+    format_profile_text,
+    format_self_profile_text,
 )
+from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
+from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
 
 class GenerateReplyTool:
@@ -101,63 +102,15 @@ class GenerateReplyTool:
 
     def _build_profile_text(self, profile: dict[str, Any]) -> str:
         """プロフィールテキストを構築。"""
-        name = profile.get("name", "")
-        age = profile.get("age", "")
-        profile_summary = profile.get("profile_summary", "")
-        meeting_timing_preference = (
-            profile.get("meeting_timing_preference")
-            or DEFAULT_MEETING_TIMING_PREFERENCE
-        )
-
-        return dedent(
-            f"""
-            [基本情報]
-            名前: {name}
-            年齢: {age}
-            出会うまでの希望: {meeting_timing_preference}
-
-            [プロフィール要約]
-            {profile_summary}
-            """
-        ).strip()
+        return format_profile_text(profile)
 
     def _build_self_profile_text(self, profile: dict[str, Any]) -> str:
         """自分のプロフィールテキストを構築。"""
-        if not profile:
-            return "自分のプロフィール情報はありません。"
-
-        name = profile.get("name", "")
-        age = profile.get("age", "")
-        profile_summary = profile.get("profile_summary", "")
-        raw_profile_text = str(profile.get("raw_profile_text", "")).strip()
-
-        return dedent(
-            f"""
-            [基本情報]
-            名前: {name}
-            年齢: {age}
-
-            [プロフィール要約]
-            {profile_summary or '要約はありません。'}
-
-            [プロフィール原文]
-            {raw_profile_text or '原文はありません。'}
-            """
-        ).strip()
+        return format_self_profile_text(profile)
 
     def _build_conversation_text(self, messages: list[dict[str, Any]]) -> str:
         """会話履歴テキストを構築。"""
-        if not messages:
-            return "会話履歴はありません。"
-
-        lines = []
-        for msg in messages:
-            sender = msg.get("sender", "")
-            message = msg.get("message", "")
-            sender_label = "相手" if sender == "other" else "自分"
-            lines.append(f"{sender_label}: {message}")
-
-        return "\n".join(lines)
+        return format_conversation_text(messages)
 
     def _build_conversation_facts_text(self, conversation_facts: dict) -> str:
         """抽出済みの重要情報テキストを構築。"""
