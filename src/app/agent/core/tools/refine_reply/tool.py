@@ -6,13 +6,13 @@ from typing import Any
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.tools.refine_reply.schema import RefineReplyStructuredOutputSchema
+from app.agent.core.utils.formatCommon import (
+    format_conversation_with_updated_at,
+    format_profile_text,
+)
 from app.agent.core.utils.improvement_feedback import FeedbackPriority
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
-from app.agent.core.utils.shared_store import (
-    DEFAULT_MEETING_TIMING_PREFERENCE,
-    get_shared_canvas,
-    get_shared_store,
-)
+from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
 
 class RefineReplyTool:
@@ -252,43 +252,11 @@ class RefineReplyTool:
         return "\n".join(f"- {item}" for item in feedback_items)
 
     def _build_profile_text(self, profile: dict[str, Any]) -> str:
-        if not profile:
-            return "プロフィール情報はありません。"
-
-        name = profile.get("name", "")
-        age = profile.get("age", "")
-        raw_profile_text = profile.get("raw_profile_text", "")
-        profile_summary = profile.get("profile_summary", "")
-        meeting_timing_preference = (
-            profile.get("meeting_timing_preference")
-            or DEFAULT_MEETING_TIMING_PREFERENCE
+        return format_profile_text(
+            profile,
+            basic_info_header=None,
+            include_raw_profile_text=True,
         )
 
-        return dedent(
-            f"""
-            名前: {name}
-            年齢: {age}
-            出会うまでの希望: {meeting_timing_preference}
-
-            [プロフィール要約]
-            {profile_summary}
-
-            [プロフィール原文]
-            {raw_profile_text}
-            """
-        ).strip()
-
     def _build_conversation_text(self, conversation: dict[str, Any]) -> str:
-        messages = conversation.get("messages", [])
-        if not messages:
-            return "会話履歴はありません。"
-
-        lines: list[str] = []
-        for msg in messages:
-            sender = msg.get("sender", "")
-            message = msg.get("message", "")
-            lines.append(f"- {sender}: {message}")
-
-        updated_at = conversation.get("updated_at", "")
-        lines.append(f"- updated_at: {updated_at}")
-        return "\n".join(lines)
+        return format_conversation_with_updated_at(conversation)

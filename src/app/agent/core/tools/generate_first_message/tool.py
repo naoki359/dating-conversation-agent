@@ -5,13 +5,12 @@ from typing import Any
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.tools.generate_first_message.schema import GenerateFirstMessageResultSchema
-from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
-from app.agent.core.utils.shared_store import (
-    DEFAULT_MEETING_TIMING_PREFERENCE,
-    get_shared_canvas,
-    get_shared_store,
-    shared_store,
+from app.agent.core.utils.formatCommon import (
+    format_profile_text,
+    format_self_profile_text,
 )
+from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
+from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store, shared_store
 
 
 class GenerateFirstMessageTool:
@@ -85,48 +84,10 @@ class GenerateFirstMessageTool:
         return Path(__file__).resolve().parent / "prompt.yaml"
 
     def _build_profile_text(self, profile: dict[str, Any]) -> str:
-        name = profile.get("name", "")
-        age = profile.get("age", "")
-        profile_summary = profile.get("profile_summary", "")
-        meeting_timing_preference = (
-            profile.get("meeting_timing_preference")
-            or DEFAULT_MEETING_TIMING_PREFERENCE
-        )
-
-        return dedent(
-            f"""
-            [基本情報]
-            名前: {name}
-            年齢: {age}
-            出会うまでの希望: {meeting_timing_preference}
-
-            [プロフィール要約]
-            {profile_summary}
-            """
-        ).strip()
+        return format_profile_text(profile)
 
     def _build_self_profile_text(self, profile: dict[str, Any]) -> str:
-        if not profile:
-            return "自分のプロフィール情報はありません。"
-
-        name = profile.get("name", "")
-        age = profile.get("age", "")
-        profile_summary = profile.get("profile_summary", "")
-        raw_profile_text = str(profile.get("raw_profile_text", "")).strip()
-
-        return dedent(
-            f"""
-            [基本情報]
-            名前: {name}
-            年齢: {age}
-
-            [プロフィール要約]
-            {profile_summary or '要約はありません。'}
-
-            [プロフィール原文]
-            {raw_profile_text or '原文はありません。'}
-            """
-        ).strip()
+        return format_self_profile_text(profile)
 
     def _build_picture_text(self, picture: Any) -> str:
         if picture is None:

@@ -10,6 +10,7 @@ from app.agent.core.utils.improvement_feedback import (
     dump_improvement_suggestions,
     merge_improvement_suggestions,
 )
+from app.agent.core.utils.formatCommon import format_conversation_text
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
@@ -123,6 +124,7 @@ class ReplySafetyCheckTool:
                 ImprovementSuggestionSchema(
                     message="性的な含みを完全に外し、安心感のある話題に置き換えてください。",
                     priority="high",
+                    alternative_text="性的な含みのない、安心感のある話題に言い換える",
                 )
             )
             detected_risks.append("sexual")
@@ -133,6 +135,7 @@ class ReplySafetyCheckTool:
                 ImprovementSuggestionSchema(
                     message="否定や攻撃ではなく、相手を尊重する表現に修正してください。",
                     priority="high",
+                    alternative_text="相手を尊重する、やわらかい表現に言い換える",
                 )
             )
             detected_risks.append("hurtful")
@@ -143,6 +146,7 @@ class ReplySafetyCheckTool:
                 ImprovementSuggestionSchema(
                     message="相手が断りやすい余白を残した誘い方に修正してください。",
                     priority="high",
+                    alternative_text="相手が断りやすい余白を残した、やわらかい誘い方に言い換える",
                 )
             )
             detected_risks.append("pressuring")
@@ -176,21 +180,12 @@ class ReplySafetyCheckTool:
         return any(pre_flags.values())
 
     def _build_conversation_text(self, messages: list[dict[str, Any]]) -> str:
-        if not messages:
-            return "会話履歴はありません。"
-
-        lines: list[str] = []
-        for msg in messages:
-            if not isinstance(msg, dict):
-                continue
-            sender = msg.get("sender", "")
-            message = str(msg.get("message", "")).strip()
-            if not message:
-                continue
-            sender_label = "相手" if sender == "other" else "自分"
-            lines.append(f"{sender_label}: {message}")
-
-        return "\n".join(lines) or "会話履歴はありません。"
+        return format_conversation_text(
+            messages,
+            skip_invalid_messages=True,
+            skip_empty_messages=True,
+            strip_message=True,
+        )
 
     def _build_pre_flags_text(self, pre_flags: dict[str, bool]) -> str:
         return "\n".join(

@@ -5,6 +5,10 @@ from textwrap import dedent
 from app.agent.core.schemas.base_tool_schema import BaseToolResult
 from app.agent.core.services.llm_client import get_chat_model_gpt5_4
 from app.agent.core.tools.invite_date_reply.schema import InviteDateReplyResultSchema
+from app.agent.core.utils.formatCommon import (
+    format_conversation_text,
+    format_profile_text,
+)
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
@@ -217,27 +221,13 @@ class InviteDateReplyTool:
         return None
 
     def _build_profile_text(self, profile: dict) -> str:
-        return dedent(
-            f"""
-            [基本情報]
-            名前: {profile.get('name', '')}
-            年齢: {profile.get('age', '')}
-            出会うまでの希望: {profile.get('meeting_timing_preference', '')}
-
-            [プロフィール要約]
-            {profile.get('profile_summary', '')}
-            """
-        ).strip()
+        return format_profile_text(
+            profile,
+            use_default_meeting_timing_preference=False,
+        )
 
     def _build_conversation_text(self, messages: list[dict]) -> str:
-        if not messages:
-            return "会話履歴はありません。"
-
-        lines: list[str] = []
-        for message in messages:
-            sender = "相手" if message.get("sender") == "other" else "自分"
-            lines.append(f"{sender}: {message.get('message', '')}")
-        return "\n".join(lines)
+        return format_conversation_text(messages)
 
     def _build_conversation_facts_text(self, conversation_facts: dict) -> str:
         meeting_area = conversation_facts.get("meeting_area") or {}

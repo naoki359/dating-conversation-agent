@@ -10,6 +10,7 @@ from app.agent.core.utils.improvement_feedback import (
     dump_improvement_suggestions,
     merge_improvement_suggestions,
 )
+from app.agent.core.utils.formatCommon import format_conversation_text
 from app.agent.core.utils.prompt_loader import load_prompt_from_yaml
 from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
@@ -66,6 +67,7 @@ class ScoreReplyQualityTool:
                     ImprovementSuggestionSchema(
                         message="同じ内容の繰り返しを避け、新しい情報か質問を1つ追加する",
                         priority="medium",
+                        alternative_text="直前の発言を繰り返さず、新しい情報か質問を1つ加えた返信にする",
                     )
                 )
 
@@ -135,19 +137,7 @@ class ScoreReplyQualityTool:
         return adjusted
 
     def _build_conversation_text(self, messages: list[dict[str, Any]]) -> str:
-        if not messages:
-            return "会話履歴はありません。"
-
-        lines: list[str] = []
-        for msg in messages:
-            if not isinstance(msg, dict):
-                continue
-            sender = msg.get("sender", "")
-            message = str(msg.get("message", ""))
-            sender_label = "相手" if sender == "other" else "自分"
-            lines.append(f"{sender_label}: {message}")
-
-        return "\n".join(lines)
+        return format_conversation_text(messages, skip_invalid_messages=True)
 
     def _dedupe_list(self, items: list[str]) -> list[str]:
         deduped: list[str] = []
