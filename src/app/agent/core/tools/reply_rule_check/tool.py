@@ -123,56 +123,6 @@ class ReplyRuleCheckTool:
         suggestions = list(result.improvement_suggestions)
         violations = list(result.violations)
 
-        # if pre_flags["multiple_questions"]:
-        #     reasons.append("質問が複数含まれており、返信ルールの『質問は1つまで』に抵触しています。")
-        #     suggestions.append(
-        #         ImprovementSuggestionSchema(
-        #             message="質問は最も返しやすい1つだけに絞ってください。",
-        #             priority="high",
-        #         )
-        #     )
-        #     violations.append("multiple_questions")
-
-        # if pre_flags["missing_hook"]:
-        #     reasons.append("相手が返しやすいフックがなく、must ルールに抵触しています。")
-        #     suggestions.append(
-        #         ImprovementSuggestionSchema(
-        #             message="質問を1つ入れるか、相手が返しやすい具体的な話題提供を1つ追加してください。",
-        #             priority="high",
-        #         )
-        #     )
-        #     violations.append("missing_hook")
-
-        # if pre_flags["repeated_point"]:
-        #     reasons.append("直近の自分の発言と同じ論点を繰り返しており、must ルールに抵触しています。")
-        #     suggestions.append(
-        #         ImprovementSuggestionSchema(
-        #             message="すでに伝えた共感や感想は繰り返さず、新しいリアクションか次の話題に進めてください。",
-        #             priority="high",
-        #         )
-        #     )
-        #     violations.append("repeated_point")
-
-        # if pre_flags["banned_word"]:
-        #     reasons.append("禁止ワードを含んでいます。")
-        #     suggestions.append(
-        #         ImprovementSuggestionSchema(
-        #             message="『けっこう』『かなり』のような禁止ワードは別表現に置き換えてください。",
-        #             priority="high",
-        #         )
-        #     )
-        #     violations.append("banned_word")
-
-        # if pre_flags["ambiguous_invite"]:
-        #     reasons.append("誘い文に具体的な日時条件が不足しており、提案が曖昧です。")
-        #     suggestions.append(
-        #         ImprovementSuggestionSchema(
-        #             message="候補日時や時間帯を具体的に示してください。",
-        #             priority="high",
-        #         )
-        #     )
-        #     violations.append("ambiguous_invite")
-
         normalized_suggestions = merge_improvement_suggestions(
             [],
             suggestions,
@@ -220,20 +170,6 @@ class ReplyRuleCheckTool:
             or pre_flags.get("banned_word")
             or pre_flags.get("ambiguous_invite")
         )
-
-    # def _apply_hard_penalty(self, score: int, pre_flags: dict[str, bool]) -> int:
-    #     adjusted = max(0, min(100, score))
-    #     if pre_flags.get("missing_hook"):
-    #         adjusted = min(adjusted, 40)
-    #     if pre_flags.get("repeated_point"):
-    #         adjusted = min(adjusted, 35)
-    #     if pre_flags.get("multiple_questions"):
-    #         adjusted = min(adjusted, 60)
-    #     if pre_flags.get("banned_word"):
-    #         adjusted = min(adjusted, 55)
-    #     if pre_flags.get("ambiguous_invite"):
-    #         adjusted = min(adjusted, 60)
-    #     return adjusted
 
     def _build_profile_text(self, profile: dict[str, Any]) -> str:
         return format_profile_text(profile)
@@ -289,12 +225,16 @@ class ReplyRuleCheckTool:
             "おすすめです！",
         )
         return any(ending in normalized for ending in topic_offer_endings)
-
+    
+    # 今回の返信が、直近の自分の発言と“同じ内容を繰り返していないか”を判定する処理
     def _has_repeated_point(self, reply_text: str, recent_self_messages: list[str]) -> bool:
+        # 今回の返信文を、ある程度の意味の塊に分割して、空白や絵文字を削除して正規化する
         reply_segments = self._extract_meaningful_segments(reply_text)
         if not reply_segments:
             return False
-
+        
+        # 過去の自分のメッセージも同様に処理して、意味の塊ごとに今回の返信文の塊と類似度を比較する。
+        # 類似度が一定以上なら、同じ内容を繰り返していると判定する。
         for recent_message in recent_self_messages:
             recent_segments = self._extract_meaningful_segments(recent_message)
             for reply_segment in reply_segments:
@@ -304,19 +244,31 @@ class ReplyRuleCheckTool:
                         return True
 
         return False
-
+    
+    # テキストをある程度の意味の塊に分割して、空白や絵文字を削除して正規化する
     def _extract_meaningful_segments(self, text: str) -> list[str]:
+        # 返信文を、ある程度の長さがある意味の塊に分割する。
+        # "こんにちは！元気ですか？今日はいい天気ですね。"
+        # ↓
+        # ["こんにちは", "元気ですか", "今日はいい天気ですね", ""]
         raw_segments = re.split(r"[\n。！？!?]+", text)
+
+        # 戻り値
         segments: list[str] = []
+
+        # 分割した要素ごとに、空白や絵文字を削除して、ある程度の長さがあるものだけを抽出する
         for segment in raw_segments:
             stripped = self._normalize_text(segment)
             if len(stripped) < 8:
                 continue
             segments.append(stripped)
         return segments
-
+    
+    # テキストを正規化して、空白や絵文字を削除する
     def _normalize_text(self, text: str) -> str:
+        # 空白を削除
         normalized = re.sub(r"[\s\u3000]+", "", text)
+        # 絵文字や記号を削除
         normalized = re.sub(r"[😊👍✨☺️♨️🎶wW…・,.、!！?？]", "", normalized)
         return normalized
 
