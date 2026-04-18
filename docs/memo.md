@@ -14,6 +14,17 @@ uv run python -m uvicorn app.agent.entrypoint:app --reload --app-dir src
 uv run python scripts/eval_score_reply_quality.py --cases eval/score_reply_quality_cases.yaml --data-dir data/test_user --output-dir eval/results
 ```
 
+### テストの実行
+
+```bash
+uv run pytest tests/
+```
+
+特定のファイルのみ実行する場合:
+```bash
+uv run pytest tests/core/utils/test_trigger_text.py -v
+```
+
 ### issueの生成
 ```bash
 gh issue create --title "[BUG] モジュールグローバルな値の取り扱い方法検討" --body-file ".\docs\issues\011_issue.md"

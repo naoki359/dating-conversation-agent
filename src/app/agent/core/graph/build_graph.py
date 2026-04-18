@@ -75,10 +75,9 @@ def build_react_graph():
         _route_after_observe,
         {
             "decision": "decision",
-            "final_reply_rewrite": "final_reply_rewrite",
+            "final_reply_rewrite": END,
         },
     )
-    workflow.add_edge("final_reply_rewrite", END)
 
     return workflow.compile()
 
