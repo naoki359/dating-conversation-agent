@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from collections import defaultdict
 from typing import Any, Literal
 
@@ -10,18 +9,14 @@ from app.agent.core.tools.analyze_conversation_triggers.schema import (
     TriggerCandidateSchema,
 )
 from app.agent.core.config.personal_topics import (
-    CATEGORY_KEYWORDS,
-    DIRECT_TOPIC_KEYWORDS,
     OUTING_CATEGORIES,
     TOPIC_SUFFIXES,
 )
 from app.agent.core.utils.trigger_text import (
-    clean_trigger_source_text,
-    clean_trigger_topic,
     normalize_topic_text,
-    extract_phrase_candidates,
-    looks_like_non_topic,
-    SPLIT_PATTERN,
+    build_self_topics,
+    infer_category,
+    extract_topics_from_text,
 )
 from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_store
 
@@ -140,26 +135,7 @@ class AnalyzeConversationTriggersTool:
 
     def _build_self_topics(self, self_profile: dict[str, Any]) -> list[dict[str, str]]:
         """自分のプロフィール文を照合用トピック集合に正規化する。"""
-        texts = [
-            str(self_profile.get("profile_summary", "")),
-            str(self_profile.get("raw_profile_text", "")),
-        ]
-        seen: set[str] = set()
-        topics: list[dict[str, str]] = []
-        for text in texts:
-            for topic in self._extract_topics_from_text(text):
-                normalized = self._normalize_topic(topic)
-                if not normalized or normalized in seen:
-                    continue
-                seen.add(normalized)
-                topics.append(
-                    {
-                        "keyword": topic,
-                        "normalized_keyword": normalized,
-                        "category": self._infer_category(topic),
-                    }
-                )
-        return topics
+        return build_self_topics(self_profile, extract_topics_from_text, infer_category)
 
     def _build_trigger_candidates(
         self,
@@ -265,95 +241,8 @@ class AnalyzeConversationTriggersTool:
         return pruned
 
     def _extract_topics_from_text(self, text: str) -> list[str]:
-        """
-        1. 語尾ベースのフレーズ抽出
-        2. 会話フック語彙の直接検出
-        3. 区切り文字単位の補助抽出
-        の3段で候補を集める。
-
-        単一の形態素解析に寄せず、会話のフックになりやすい語だけを
-        ルールベースで拾う方針にしている。
-        """
-        cleaned_text = clean_trigger_source_text(text)
-        if not cleaned_text:
-            return []
-        
-        # 下記の3パターンで候補を取得する
-        candidates: list[str] = []
-
-        # パターン１：語尾を利用したフレーズ抽出
-        for phrase in extract_phrase_candidates(cleaned_text):
-            # ふるい落としきれなかったノイズや、話題として弱い語はここで落とす。
-            topic = self._clean_topic(phrase)
-            if topic:
-                candidates.append(topic)
-
-        # パターン２：会話フック語彙の直接検出（suffix抽出の取りこぼし補完）
-        for keyword in DIRECT_TOPIC_KEYWORDS:
-            if keyword in cleaned_text:
-                topic = self._clean_topic(keyword)
-                if topic:
-                    candidates.append(topic)
-
-        # パターン３：区切り文字単位の補助抽出
-        # ここは recall を補うための保険で、ノイズは _clean_topic 側で落とす。
-        for token in SPLIT_PATTERN.split(cleaned_text):
-            topic = self._clean_topic(token)
-            if not topic:
-                continue
-            if self._is_topic_like(topic):
-                candidates.append(topic)
-            candidates.extend(self._extract_compound_topics(topic))
-
-        seen: set[str] = set()
-        deduplicated: list[str] = []
-        for candidate in candidates:
-            normalized = self._normalize_topic(candidate)
-            if not normalized or normalized in seen:
-                continue
-            seen.add(normalized)
-            deduplicated.append(candidate)
-
-        return deduplicated
-
-
-
-    def _extract_compound_topics(self, token: str) -> list[str]:
-        """スラッシュや中黒で並列列挙された話題を個別トピックに分解する。"""
-        parts: list[str] = []
-        for separator in ("/", "・"):
-            if separator in token:
-                parts.extend(segment.strip() for segment in token.split(separator))
-
-        cleaned_parts: list[str] = []
-        for part in parts:
-            topic = self._clean_topic(part)
-            if topic:
-                cleaned_parts.append(topic)
-        return cleaned_parts
-
-    def _clean_topic(self, raw_topic: str) -> str:
-        """
-        候補語から会話トリガーとして不要な修飾を落とす。
-
-        例:
-        - 最近は下村観山展 -> 下村観山展
-        - すみだ水族館で -> すみだ水族館
-        - クラゲみました -> クラゲ
-        """
-        topic = clean_trigger_topic(raw_topic)
-        if not topic:
-            return ""
-        if looks_like_non_topic(topic):
-            return ""
-        return topic
-
-
-    def _is_topic_like(self, topic: str) -> bool:
-        """補助抽出した語が、少なくとも何らかの話題カテゴリに属しそうかを判定する。"""
-        if any(topic.endswith(suffix) for suffix in TOPIC_SUFFIXES):
-            return True
-        return self._infer_category(topic) != "general"
+        """テキストから会話トリガー候補を抽出する。"""
+        return extract_topics_from_text(text)
 
     def _normalize_topic(self, topic: str) -> str:
         """句読点や記号差分を無視して比較できるように正規化する。"""
@@ -361,11 +250,7 @@ class AnalyzeConversationTriggersTool:
 
     def _infer_category(self, keyword: str) -> str:
         """候補語を粗い興味カテゴリに割り当てる。"""
-        normalized = self._normalize_topic(keyword)
-        for category, category_keywords in CATEGORY_KEYWORDS.items():
-            if any(self._normalize_topic(term) in normalized for term in category_keywords):
-                return category
-        return "general"
+        return infer_category(keyword)
 
     def _match_with_self_profile(
         self,

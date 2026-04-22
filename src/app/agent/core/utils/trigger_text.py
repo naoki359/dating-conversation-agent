@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from typing import Any, Callable
 
 from app.agent.core.config.personal_topics import (
     CATEGORY_KEYWORDS,
@@ -161,3 +162,126 @@ def looks_like_non_topic(topic: str) -> bool:
     if len(topic) > 24:
         return True
     return False
+
+
+def infer_category(keyword: str) -> str:
+    """候補語を粗い興味カテゴリに割り当てる。"""
+    normalized = normalize_topic_text(keyword)
+    for category, category_keywords in CATEGORY_KEYWORDS.items():
+        if any(normalize_topic_text(term) in normalized for term in category_keywords):
+            return category
+    return "general"
+
+
+def _clean_topic(raw_topic: str) -> str:
+    """clean_trigger_topic と looks_like_non_topic を組み合わせたモジュール内ヘルパー。"""
+    topic = clean_trigger_topic(raw_topic)
+    if not topic:
+        return ""
+    if looks_like_non_topic(topic):
+        return ""
+    return topic
+
+
+def _is_topic_like(topic: str) -> bool:
+    """補助抽出した語が話題カテゴリに属しそうかを判定する。"""
+    if any(topic.endswith(suffix) for suffix in TOPIC_SUFFIXES):
+        return True
+    return infer_category(topic) != "general"
+
+
+def _extract_compound_topics(token: str) -> list[str]:
+    """スラッシュや中黒で並列列挙された話題を個別トピックに分解する。"""
+    parts: list[str] = []
+    for separator in ("/", "・"):
+        if separator in token:
+            parts.extend(segment.strip() for segment in token.split(separator))
+    return [t for part in parts if (t := _clean_topic(part))]
+
+
+def extract_topics_from_text(text: str) -> list[str]:
+    """
+    テキストから会話トリガー候補を3段階で抽出する。
+
+    1. 語尾ベースのフレーズ抽出
+    2. 会話フック語彙の直接検出
+    3. 区切り文字単位の補助抽出
+
+    単一の形態素解析に寄せず、会話のフックになりやすい語だけを
+    ルールベースで拾う方針にしている。
+    """
+    cleaned_text = clean_trigger_source_text(text)
+    if not cleaned_text:
+        return []
+
+    candidates: list[str] = []
+
+    # パターン１：語尾を利用したフレーズ抽出
+    for phrase in extract_phrase_candidates(cleaned_text):
+        topic = _clean_topic(phrase)
+        if topic:
+            candidates.append(topic)
+
+    # パターン２：会話フック語彙の直接検出（suffix 抽出の取りこぼし補完）
+    for keyword in DIRECT_TOPIC_KEYWORDS:
+        if keyword in cleaned_text:
+            topic = _clean_topic(keyword)
+            if topic:
+                candidates.append(topic)
+
+    # パターン３：区切り文字単位の補助抽出
+    for token in SPLIT_PATTERN.split(cleaned_text):
+        topic = _clean_topic(token)
+        if not topic:
+            continue
+        if _is_topic_like(topic):
+            candidates.append(topic)
+        candidates.extend(_extract_compound_topics(topic))
+
+    seen: set[str] = set()
+    deduplicated: list[str] = []
+    for candidate in candidates:
+        normalized = normalize_topic_text(candidate)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        deduplicated.append(candidate)
+
+    return deduplicated
+
+
+def build_self_topics(
+    self_profile: dict[str, Any],
+    extract_topics_fn: Callable[[str], list[str]],
+    infer_category_fn: Callable[[str], str],
+) -> list[dict[str, str]]:
+    """自分のプロフィール文を照合用トピック集合に正規化する。
+
+    Args:
+        self_profile: 自分のプロフィール辞書。profile_summary / raw_profile_text を参照する。
+        extract_topics_fn: テキストからトピック候補を抽出する関数。
+        infer_category_fn: トピック語のカテゴリを推定する関数。
+
+    Returns:
+        keyword / normalized_keyword / category をキーに持つ辞書のリスト。
+    """
+    texts = [
+        str(self_profile.get("profile_summary", "")),
+        str(self_profile.get("raw_profile_text", "")),
+    ]
+    seen: set[str] = set()
+    topics: list[dict[str, str]] = []
+    for text in texts:
+        for topic in extract_topics_fn(text):
+            normalized = normalize_topic_text(topic)
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            topics.append(
+                {
+                    "keyword": topic,
+                    "normalized_keyword": normalized,
+                    "category": infer_category_fn(topic),
+                }
+            )
+    return topics
