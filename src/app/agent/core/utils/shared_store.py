@@ -137,6 +137,19 @@ class ConversationWordClassification(TypedDict, total=False):
     function_terms: list[ClassifiedConversationTerm]
 
 
+class TriggerCandidate(TypedDict, total=False):
+    keyword: str
+    normalized_keyword: str
+    source: str
+    source_quote: str
+    category: str
+    match_level: str
+    match_reason: str
+    related_self_profile_keywords: list[str]
+    needs_research: bool
+    priority_score: int
+
+
 ReplyCandidateThemeId = Literal[
     "question_continue",
     "question_shift",
@@ -241,6 +254,9 @@ class Canvas(TypedDict, total=False):
     # -----------------------------------
     conversation_facts: ConversationFacts
     conversation_word_classification: ConversationWordClassification
+    trigger_candidates: list[TriggerCandidate]
+    selected_trigger_keyword: str
+    trigger_analysis_summary: list[str]
 
 
 @dataclass

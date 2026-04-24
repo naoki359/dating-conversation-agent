@@ -19,8 +19,8 @@ class ObserveNode(BaseNode):
     node_name = "observe_node"
 
     # パラメータ
-    FIT_SCORE_THRESHOLD = 80  # fit_score がこの値以上なら継続を検討
-    REPLY_QUALITY_SCORE_THRESHOLD = 70  # 返信品質スコアがこの値以上なら継続を検討
+    FIT_SCORE_THRESHOLD = 90  # fit_score がこの値以上なら継続を検討
+    REPLY_QUALITY_SCORE_THRESHOLD = 90  # 返信品質スコアがこの値以上なら継続を検討
     MAX_ACTION_LOOP_COUNT = 10  # 最大ループ回数
 
     def execute(self, state: ReactState) -> ObserveOutputSchema:
