@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from app.agent.core.config.personal_topics import (
     CATEGORY_KEYWORDS,
@@ -9,6 +9,13 @@ from app.agent.core.config.personal_topics import (
     OUTING_CATEGORIES,
     TOPIC_SUFFIXES,
 )
+
+if TYPE_CHECKING:
+    from app.agent.core.tools.analyze_conversation_triggers.schema import (
+        TriggerCandidateSchema,
+        TriggerMatchLevel,
+        TriggerSource,
+    )
 
 
 _PREFIX_PATTERN = re.compile(
@@ -285,3 +292,211 @@ def build_self_topics(
                 }
             )
     return topics
+
+
+# ---------------------------------------------------------------------------
+# build_trigger_candidates とその補助関数
+# ---------------------------------------------------------------------------
+
+def _source_score(source: str) -> int:
+    """どのソース由来の話題かに応じて優先度の基礎点を返す。"""
+    if source == "latest_message":
+        return 40
+    if source == "partner_profile_summary":
+        return 25
+    return 15
+
+
+def _topic_specificity_score(topic: str, category: str) -> int:
+    """具体的な施設名・展示名・カテゴリ既知語を上に出すための補正点。"""
+    score = 5
+    if category != "general":
+        score += 10
+    if any(topic.endswith(suffix) for suffix in TOPIC_SUFFIXES):
+        score += 10
+    if len(topic) >= 4:
+        score += 5
+    return score
+
+
+def _match_score(match_level: str) -> int:
+    """self_profile との近さを最終優先度へ加点する。"""
+    if match_level == "high":
+        return 40
+    if match_level == "partial":
+        return 20
+    return 0
+
+
+def match_with_self_profile(
+    *,
+    candidate_keyword: str,
+    candidate_normalized: str,
+    candidate_category: str,
+    self_topics: list[dict[str, str]],
+) -> tuple[TriggerMatchLevel, list[str], str]:
+    """
+    候補語と self_profile の一致度を3段階で判定する。
+
+    - high: 語として直接つながる
+    - partial: 同じカテゴリ、または外出系の近い話題
+    - none: 明示的な接点がない
+    """
+    exact_matches: list[str] = []
+    category_matches: list[str] = []
+
+    for self_topic in self_topics:
+        self_keyword = self_topic["keyword"]
+        self_normalized = self_topic["normalized_keyword"]
+        self_category = self_topic["category"]
+
+        if candidate_normalized in self_normalized or self_normalized in candidate_normalized:
+            exact_matches.append(self_keyword)
+            continue
+
+        if candidate_category != "general" and candidate_category == self_category:
+            category_matches.append(self_keyword)
+
+    if exact_matches:
+        return (
+            "high",
+            exact_matches[:5],
+            f"自分のプロフィールに {', '.join(exact_matches[:3])} があり、直接つながる話題です。",
+        )
+
+    if category_matches:
+        unique_category_matches = list(dict.fromkeys(category_matches))
+        return (
+            "partial",
+            unique_category_matches[:5],
+            f"{candidate_keyword} は自分の {', '.join(unique_category_matches[:3])} と同系統の話題です。",
+        )
+
+    if candidate_category in OUTING_CATEGORIES:
+        broad_matches = [
+            self_topic["keyword"]
+            for self_topic in self_topics
+            if self_topic["category"] in OUTING_CATEGORIES
+        ]
+        if broad_matches:
+            unique_broad_matches = list(dict.fromkeys(broad_matches))
+            return (
+                "partial",
+                unique_broad_matches[:5],
+                f"{candidate_keyword} は自分の外出系の興味 ({', '.join(unique_broad_matches[:3])}) に近い話題です。",
+            )
+
+    return (
+        "none",
+        [],
+        "自分のプロフィール内に明確な接点が見つからない話題です。",
+    )
+
+
+def prune_generic_duplicates(
+    candidates: list[TriggerCandidateSchema],
+) -> list[TriggerCandidateSchema]:
+    """
+    具体語がある場合に汎称を落とす。
+
+    例:
+    - すみだ水族館 があるなら 水族館 は不要
+    - 下村観山展 があるなら 展 は不要
+    """
+    pruned: list[TriggerCandidateSchema] = []
+    for candidate in candidates:
+        duplicated = False
+        for existing in pruned:
+            if (
+                existing.category == candidate.category
+                and existing.normalized_keyword != candidate.normalized_keyword
+                and existing.normalized_keyword.endswith(candidate.normalized_keyword)
+                and len(existing.normalized_keyword) > len(candidate.normalized_keyword)
+            ):
+                duplicated = True
+                break
+        if not duplicated:
+            pruned.append(candidate)
+    return pruned
+
+
+def build_trigger_candidates(
+    source_texts: list[tuple[TriggerSource, str]],
+    self_topics: list[dict[str, str]],
+) -> list[TriggerCandidateSchema]:
+    """
+    各入力ソースから候補語を集め、
+    1. 同じ語の重複統合
+    2. 自分プロフィールとの一致度判定
+    3. 優先度スコア付け
+    の順に整形する。
+    """
+    from app.agent.core.tools.analyze_conversation_triggers.schema import TriggerCandidateSchema
+    candidates_by_key: dict[str, dict[str, Any]] = {}
+
+    for source, text in source_texts:
+        # 会話のトリガーとなる語をテキストから抽出する
+        for topic in extract_topics_from_text(text):
+            # 抽出した語を正規化して、すでに同じ語が候補としてあるか見る。
+            normalized = normalize_topic_text(topic)
+            if not normalized:
+                continue
+
+            # 値を取得
+            existing = candidates_by_key.get(normalized)
+            # 取得元を考慮して基礎点を決める
+            src_score = _source_score(source)
+            # カテゴリーも取得
+            category = infer_category(topic)
+
+            # 最新メッセージ由来か、具体語か、カテゴリ推定できるかで
+            # まず基礎点を決める。まだ self_profile との一致度は加算しない。
+            base_priority = src_score + _topic_specificity_score(topic, category)
+
+            if existing is None or base_priority > int(existing["priority_score"]):
+                candidates_by_key[normalized] = {
+                    "keyword": topic,
+                    "normalized_keyword": normalized,
+                    "source": source,
+                    "source_quote": text,
+                    "category": category,
+                    "priority_score": base_priority,
+                }
+
+    candidates: list[TriggerCandidateSchema] = []
+    for candidate_data in candidates_by_key.values():
+        # 照合ロジックは exact match / category match / broad outing match の順。
+        # ここで返る match_level を priority に反映する。
+        match_level, related_keywords, match_reason = match_with_self_profile(
+            candidate_keyword=str(candidate_data["keyword"]),
+            candidate_normalized=str(candidate_data["normalized_keyword"]),
+            candidate_category=str(candidate_data["category"]),
+            self_topics=self_topics,
+        )
+
+        priority_score = int(candidate_data["priority_score"]) + _match_score(match_level)
+        candidates.append(
+            TriggerCandidateSchema(
+                keyword=str(candidate_data["keyword"]),
+                normalized_keyword=str(candidate_data["normalized_keyword"]),
+                source=candidate_data["source"],
+                source_quote=str(candidate_data["source_quote"]),
+                category=str(candidate_data["category"]),
+                match_level=match_level,
+                match_reason=match_reason,
+                related_self_profile_keywords=related_keywords,
+                needs_research=(match_level == "none"),
+                priority_score=priority_score,
+            )
+        )
+
+    sorted_candidates = sorted(
+        candidates,
+        key=lambda candidate: (
+            candidate.priority_score,
+            _source_score(candidate.source),
+            len(candidate.keyword),
+        ),
+        reverse=True,
+    )
+    return prune_generic_duplicates(sorted_candidates)
