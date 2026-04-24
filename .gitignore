@@ -27,3 +27,6 @@ logs/
 
 # Requests
 /requests/pro_create.rest
+
+# mlflow
+mlflow.db
