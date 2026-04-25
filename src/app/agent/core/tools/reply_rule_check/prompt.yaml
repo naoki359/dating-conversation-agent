@@ -34,6 +34,22 @@ messages:
         内容: 「〇〇ですし、△△です」という構文は、違和感があるため使用しないこと
         判定: passed=false, should_regenerate=true, score=-50
 
+      - mixed_sentence_role:
+        内容: 以下のような異なる役割の文が「、」で接続されている場合は違反
+          - 共感 → 自分の話
+          - 共感 → 評価
+          - 評価 → 自分の話
+        例:
+          NG: 「可愛いですよね、僕も好きで〜」
+          OK: 「可愛いですよね！僕も好きで〜」
+        判定: passed=false, should_regenerate=true, score=-50
+
+        - question_specificity:
+          内容: 質問は「その人の体験・理由・具体例」を引き出す形にする
+            NG例: 「どっちが好き？」「よく行きますか？」
+            OK例: 「最近行ってよかった場所ありますか？」「特に印象に残ってる体験ってありますか？」
+          判定: passed=false, should_regenerate=true, score=-50
+
       ## medium（品質劣化）
 
       - banned_word:
@@ -66,7 +82,6 @@ messages:
       - reasons: 箇条書きで 1-5 件
       - improvement_suggestions: 0-3 件のオブジェクト配列
       - 各 improvement_suggestions 要素は {{ message, priority }} を持つこと
-      - violations: 箇条書きで 0-3 件
       - 指摘事項に対しては必ず代替となるテキストを提示すること
 
   - role: user

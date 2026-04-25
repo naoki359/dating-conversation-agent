@@ -18,7 +18,7 @@ class ToolEnum(Enum):
     GET_HISTORY_AND_FACTS = (
         GetHistoryAndFactsTool().execute,
         "相手のプロフィールと会話履歴を取得し、住んでいる地域などの重要な情報を抽出する",
-        "",
+        "必ず一番初めに実行すること",
         "shared_store に profile と conversation が保存され、canvas に conversation_facts が展開された状態になる"
     )
 

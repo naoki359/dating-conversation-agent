@@ -1,6 +1,7 @@
 import uuid
 from typing import Any, Optional
 
+import mlflow
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
@@ -10,6 +11,10 @@ from app.agent.core.utils.shared_store import (
     destroy_execution_bucket,
     get_shared_canvas,
 )
+
+mlflow.set_tracking_uri("http://127.0.0.1:5000/")
+mlflow.set_experiment("MLflow 返信生成エージェント")
+mlflow.langchain.autolog()
 
 app = FastAPI(title="Dating Conversation Agent")
 
@@ -47,27 +52,29 @@ def generate_reply(request: ReplyRequest):
     # グラフの生成
     graph = get_graph()
 
-    try:
-        # グラフを実行して返信を生成
-        graph.invoke(
-            {
-                "user_id": request.id,
-                "execution_id": execution_id,
-            },
-            config={"recursion_limit": 100},
-        )
+    with mlflow.start_run(run_name=f"reply_{request.id}"):
+        mlflow.set_tags({"user_id": request.id, "execution_id": execution_id})
+        try:
+            # グラフを実行して返信を生成
+            graph.invoke(
+                {
+                    "user_id": request.id,
+                    "execution_id": execution_id,
+                },
+                config={"recursion_limit": 100},
+            )
 
-        # 作成した返信を取得して返却する
-        canvas = get_shared_canvas(execution_id)
-        reply_candidates = canvas.get("reply_candidates", [])
-        return ReplyResponse(
-            generated_reply=str(canvas.get("generated_reply", "")),
-            reply_reasoning=str(canvas.get("reply_reasoning", "")),
-            reply_candidates=(
-                reply_candidates if isinstance(reply_candidates, list) else []
-            ),
-            selected_reply_candidate_id=str(canvas.get("selected_reply_candidate_id", "")),
-        )
-    finally:
-        # バケットの削除
-        destroy_execution_bucket(execution_id)
+            # 作成した返信を取得して返却する
+            canvas = get_shared_canvas(execution_id)
+            reply_candidates = canvas.get("reply_candidates", [])
+            return ReplyResponse(
+                generated_reply=str(canvas.get("generated_reply", "")),
+                reply_reasoning=str(canvas.get("reply_reasoning", "")),
+                reply_candidates=(
+                    reply_candidates if isinstance(reply_candidates, list) else []
+                ),
+                selected_reply_candidate_id=str(canvas.get("selected_reply_candidate_id", "")),
+            )
+        finally:
+            # バケットの削除
+            destroy_execution_bucket(execution_id)

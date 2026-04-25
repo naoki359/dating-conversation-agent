@@ -17,6 +17,11 @@ class ImprovementSuggestionSchema(BaseModel):
         description="指摘の優先度。high, medium, low のいずれか。",
     )
 
+    original_text: str = Field(
+        ...,
+        description="修正前の該当箇所の文章（問題のある部分をそのまま抜き出す）。",
+    )
+
     alternative_text: str = Field(
         ...,
         description="指摘事項に対しての代替となるテキスト。",
