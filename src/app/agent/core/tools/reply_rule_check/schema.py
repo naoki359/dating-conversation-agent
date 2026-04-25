@@ -30,8 +30,3 @@ class ReplyRuleCheckResultSchema(BaseModel):
         default_factory=list,
         description="返信ルール上の改善提案。",
     )
-
-    violations: list[str] = Field(
-        default_factory=list,
-        description="検知したルール違反。",
-    )

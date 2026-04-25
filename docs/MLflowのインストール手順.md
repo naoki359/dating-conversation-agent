@@ -18,3 +18,9 @@
 
 - メインエリア：中央の白色の部分
 - ナビゲーションパネル：ページの切り替えを行うナビゲーション。GenAI/Model Trainingが選択可能。基本的はGenAIを利用する
+
+### 簡単な画面の味方メモ
+
+#### Trace - Details & TimeLine
+
+- ChatPromptTemplateでプロンプトの内容を確認できる
