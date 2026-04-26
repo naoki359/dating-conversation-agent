@@ -45,6 +45,9 @@ class ReactState(TypedDict, total=False):
     # ===== Loop Summary =====
     loop_summary: str  # 直前のObserveノードが生成した1ループ終了時のサマリー
 
+    # ===== Final Reply =====
+    final_reply: str  # ReActループ終了後に確定した最終返信
+
 
 # ============================================
 # CanvasData: 成果物
