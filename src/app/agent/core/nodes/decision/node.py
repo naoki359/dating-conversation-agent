@@ -32,6 +32,7 @@ class DecisionNode(BaseNode):
         conversation_text = self._build_conversation_text(execution_id)
         history = self._build_past_thought_process_text(state)
         tools_info = self._build_tools_info()
+        loop_summary = state.get("loop_summary", "（前ループのサマリーはありません）")
 
         prompt_value = self.prompt.invoke(
             {
@@ -40,6 +41,7 @@ class DecisionNode(BaseNode):
                 "conversation_text": conversation_text,
                 "history": history,
                 "tools_info": tools_info,
+                "loop_summary": loop_summary,
             }
         )
 

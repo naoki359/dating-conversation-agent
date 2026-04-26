@@ -42,6 +42,9 @@ class ReactState(TypedDict, total=False):
     # ===== History =====
     history: list[BaseOutputSchema]  # ReActの検討履歴（各ノードの出力）
 
+    # ===== Loop Summary =====
+    loop_summary: str  # 直前のObserveノードが生成した1ループ終了時のサマリー
+
 
 # ============================================
 # CanvasData: 成果物

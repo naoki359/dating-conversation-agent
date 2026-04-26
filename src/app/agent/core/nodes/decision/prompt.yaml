@@ -63,3 +63,6 @@ messages:
 
       [これまでの思考過程]
       {history}
+
+      [前ループのサマリー]
+      {loop_summary}

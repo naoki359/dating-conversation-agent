@@ -94,6 +94,7 @@ class ObserveNode(BaseNode):
             "is_finished": is_finished,
             "decided_action": "",
             "selected_tool": "",
+            "loop_summary": node_result.summary,
         }
 
         return updated_state
