@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
+from app.agent.core.config.settings import Settings
 from app.agent.core.nodes.base_node import BaseNode
 from app.agent.core.nodes.observe.schema import ObserveOutputSchema
 from app.agent.core.schemas.base_output_schema import BaseOutputSchema
@@ -99,16 +100,16 @@ class ObserveNode(BaseNode):
 
         return updated_state
     
-    @override
-    def canvas_update(self, node_result: BaseOutputSchema) -> None:
-        if not isinstance(node_result, ObserveOutputSchema):
-            return
+    # @override
+    # def canvas_update(self, node_result: BaseOutputSchema) -> None:
+    #     if not isinstance(node_result, ObserveOutputSchema):
+    #         return
 
-        print("\n=== ObserveNode ===")
-        print(f"fit_score: {node_result.fit_score}")
-        print(f"action_loop_count: {node_result.action_loop_count}")
-        print(f"decision: {node_result.decision}")
-        print(f"reasoning: {node_result.reasoning}")
+    #     # print("\n=== ObserveNode ===")
+    #     # print(f"fit_score: {node_result.fit_score}")
+    #     # print(f"action_loop_count: {node_result.action_loop_count}")
+    #     # print(f"decision: {node_result.decision}")
+    #     # print(f"reasoning: {node_result.reasoning}")
 
     def _get_prompt_path(self) -> Path:
         return Path(__file__).resolve().parent / "prompt.yaml"
@@ -215,3 +216,10 @@ class ObserveNode(BaseNode):
             "に達していないため、品質向上のため継続します。"
         )
         return "continue", reason
+    
+    def console_render(self, result: ObserveOutputSchema) -> None:
+        if not Settings.AGENT_LOCAL_MODE:
+            return
+        
+        print("\n=== ObserveNode ===")
+        print(result.summary)
