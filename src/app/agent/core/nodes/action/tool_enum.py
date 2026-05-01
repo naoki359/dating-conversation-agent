@@ -1,6 +1,7 @@
 from enum import Enum
 
 from app.agent.core.tools.analyze_conversation_triggers.tool import AnalyzeConversationTriggersTool
+from app.agent.core.tools.decide_conversation_topic.tool import DecideConversationTopicTool
 from app.agent.core.tools.invite_date_reply.tool import InviteDateReplyTool
 from app.agent.core.tools.generate_first_message.tool import GenerateFirstMessageTool
 from app.agent.core.tools.get_history_and_facts.tool import GetHistoryAndFactsTool
@@ -22,11 +23,11 @@ class ToolEnum(Enum):
         "shared_store に profile と conversation が保存され、canvas に conversation_facts が展開された状態になる"
     )
 
-    ANALYZE_CONVERSATION_TRIGGERS = (
-        AnalyzeConversationTriggersTool().execute,
-        "相手の最新メッセージとプロフィールから会話トリガー候補を抽出し、自分のプロフィールとの一致度を判定する",
-        "返信生成前の話題整理に使うこと。高一致や準一致の候補が見つかったら、それを踏まえて次の返信生成に進むこと。",
-        "canvas に trigger_candidates と selected_trigger_keyword が保存され、話題選定に使える状態になる"
+    DECIDE_CONVERSATION_TOPIC = (
+        DecideConversationTopicTool().execute,
+        "会話履歴を分析し、話題を継続するべきか切り替えるべきかを判定する。会話が単調になるのを防ぐ。",
+        "GENERATE_REPLY の前に必ず実行すること",
+        "canvas に conversation_topic_strategy が保存され、返信生成ノードが話題方針を参照できる状態になる"
     )
 
     GENERATE_REPLY = (

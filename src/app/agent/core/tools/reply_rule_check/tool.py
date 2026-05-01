@@ -64,9 +64,10 @@ class ReplyRuleCheckTool:
             )
 
         messages = conversation.get("messages", []) if isinstance(conversation, dict) else []
+        conversation_topic_strategy = scoped_canvas.get("conversation_topic_strategy", {})
 
         try:
-            output = self.evaluate_reply_text(reply_text, messages, profile)
+            output = self.evaluate_reply_text(reply_text, messages, profile, conversation_topic_strategy)
 
             scoped_canvas["reply_rule_score"] = int(output["rule_score"])
             scoped_canvas["reply_rule_passed"] = bool(output["passed"])
@@ -102,6 +103,7 @@ class ReplyRuleCheckTool:
         reply_text: str,
         messages: list[dict[str, Any]],
         profile: dict[str, Any],
+        conversation_topic_strategy: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         # recent_self_messages = self._extract_recent_self_messages(messages)
         # pre_flags = self._detect_rule_flags(reply_text, recent_self_messages)
@@ -111,6 +113,7 @@ class ReplyRuleCheckTool:
                 "reply_text": reply_text,
                 "conversation_text": self._build_conversation_text(messages),
                 "profile_text": format_profile_text(profile),
+                "conversation_topic_strategy": self._build_conversation_topic_strategy_text(conversation_topic_strategy or {}),
                 # "pre_flags": self._build_pre_flags_text(pre_flags),
             }
         )
@@ -134,6 +137,38 @@ class ReplyRuleCheckTool:
 
     def _get_prompt_path(self) -> Path:
         return Path(__file__).resolve().parent / "prompt.yaml"
+
+    def _build_conversation_topic_strategy_text(self, strategy: dict[str, Any]) -> str:
+        """話題継続・切り替え方針テキストを構築。"""
+        if not strategy:
+            return "話題方針の判定結果はありません。"
+
+        should_continue = strategy.get("should_continue_topic", True)
+        current_topic = strategy.get("current_topic", "")
+        same_topic_turns = strategy.get("same_topic_turns", 0)
+        reasoning = strategy.get("reasoning", "")
+
+        if should_continue:
+            policy = strategy.get("continuation_policy", "")
+            lines = [
+                "判定: 話題を継続する",
+                f"現在の主題: {current_topic or '不明'}",
+                f"継続ターン数: {same_topic_turns}",
+                f"継続方針: {policy or 'なし'}",
+                f"判定根拠: {reasoning or 'なし'}",
+            ]
+        else:
+            policy = strategy.get("switch_policy", "")
+            next_topic = strategy.get("next_topic_suggestion", "")
+            lines = [
+                "判定: 話題を切り替える",
+                f"現在の主題: {current_topic or '不明'}",
+                f"継続ターン数: {same_topic_turns}",
+                f"切り替え指示: {policy or 'なし'}",
+                f"推奨話題: {next_topic or 'なし'}",
+                f"判定根拠: {reasoning or 'なし'}",
+            ]
+        return "\n".join(lines)
     
     # 返信文と会話履歴の静的な調査
     # def _detect_rule_flags(self, reply_text: str, recent_self_messages: list[str]) -> dict[str, bool]:
