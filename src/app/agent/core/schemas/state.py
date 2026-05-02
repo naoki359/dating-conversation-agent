@@ -48,6 +48,10 @@ class ReactState(TypedDict, total=False):
     # ===== Final Reply =====
     final_reply: str  # ReActループ終了後に確定した最終返信
 
+    # ===== Analysis =====
+    intent: str  # 返信生成時の意図（CreateAnalysisLogNode が設定）
+    target_message_id: str  # 返信対象の相手メッセージID（CreateAnalysisLogNode が設定）
+
 
 # ============================================
 # CanvasData: 成果物
