@@ -117,7 +117,7 @@ class CreateAnalysisLogNode(BaseNode):
         """分析用ログを JSON ファイルとして保存する。"""
         log_dir = Path(Settings.AGENT_LOG_DIR) / "analysis" / user_id
         log_dir.mkdir(parents=True, exist_ok=True)
-        log_path = log_dir / f"{now.strftime('%Y%m%d')}_{trace_id}.json"
+        log_path = log_dir / f"{now.strftime('%Y%m%d%H%M%S')}.json"
         with log_path.open("w", encoding="utf-8") as f:
             json.dump(log_data, f, ensure_ascii=False, indent=2)
         return log_path
