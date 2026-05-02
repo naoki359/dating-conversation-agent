@@ -35,6 +35,7 @@ class GenerateReplyTool:
         messages = conversation.get("messages", [])
         conversation_facts = scoped_canvas.get("conversation_facts", {})
         selected_trigger_keyword = scoped_canvas.get("selected_trigger_keyword", "")
+        conversation_topic_strategy = scoped_canvas.get("conversation_topic_strategy", {})
 
         # 最新のメッセージ（相手からのメッセージ）を取得
         latest_message = None
@@ -49,6 +50,7 @@ class GenerateReplyTool:
         conversation_text = self._build_conversation_text(messages)
         conversation_facts_text = self._build_conversation_facts_text(conversation_facts)
         fact_collection_guidance = self._build_fact_collection_guidance(conversation_facts)
+        conversation_topic_strategy_text = self._build_conversation_topic_strategy_text(conversation_topic_strategy)
         latest_message_text = latest_message.get("message", "") if latest_message else "最新のメッセージはありません。これから作るものが初回メッセージです。"
 
         print("=== プロンプト用テキスト（会話履歴） ===")
@@ -65,6 +67,7 @@ class GenerateReplyTool:
                     "fact_collection_guidance": fact_collection_guidance,
                     "latest_message": latest_message_text,
                     "selected_trigger_keyword": selected_trigger_keyword or "なし",
+                    "conversation_topic_strategy": conversation_topic_strategy_text,
                 }
             )
 
@@ -166,3 +169,35 @@ class GenerateReplyTool:
             "meeting_area と available_time は取得済みです。"
             "会話フェーズに応じて、自然なタイミングでデート提案を検討できます。"
         )
+
+    def _build_conversation_topic_strategy_text(self, strategy: dict) -> str:
+        """話題継続・切り替え方針テキストを構築。"""
+        if not strategy:
+            return "話題方針の判定結果はありません。"
+
+        should_continue = strategy.get("should_continue_topic", True)
+        current_topic = strategy.get("current_topic", "")
+        same_topic_turns = strategy.get("same_topic_turns", 0)
+        reasoning = strategy.get("reasoning", "")
+
+        if should_continue:
+            policy = strategy.get("continuation_policy", "")
+            lines = [
+                f"判定: 話題を継続する",
+                f"現在の主題: {current_topic or '不明'}",
+                f"継続ターン数: {same_topic_turns}",
+                f"継続方針: {policy or 'なし'}",
+                f"判定根拠: {reasoning or 'なし'}",
+            ]
+        else:
+            policy = strategy.get("switch_policy", "")
+            next_topic = strategy.get("next_topic_suggestion", "")
+            lines = [
+                f"判定: 話題を切り替える",
+                f"現在の主題: {current_topic or '不明'}",
+                f"継続ターン数: {same_topic_turns}",
+                f"切り替え指示: {policy or 'なし'}",
+                f"推奨話題: {next_topic or 'なし'}",
+                f"判定根拠: {reasoning or 'なし'}",
+            ]
+        return "\n".join(lines)

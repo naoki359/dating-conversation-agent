@@ -258,6 +258,24 @@ class Canvas(TypedDict, total=False):
     selected_trigger_keyword: str
     trigger_analysis_summary: list[str]
 
+    # -----------------------------------
+    # 話題継続・切り替え方針
+    # -----------------------------------
+    conversation_topic_strategy: "ConversationTopicStrategy"
+
+
+class ConversationTopicStrategy(TypedDict, total=False):
+    current_topic: str
+    current_topic_category: str
+    same_topic_turns: int
+    last_question_by_self: str
+    is_monotonous: bool
+    should_continue_topic: bool
+    continuation_policy: str
+    switch_policy: str
+    next_topic_suggestion: str
+    reasoning: str
+
 
 @dataclass
 class _ExecutionBucket:

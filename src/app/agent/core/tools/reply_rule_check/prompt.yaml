@@ -50,6 +50,13 @@ messages:
             OK例: 「最近行ってよかった場所ありますか？」「特に印象に残ってる体験ってありますか？」
           判定: passed=false, should_regenerate=true, score=-50
 
+      - topic_switch_violation:
+        内容: |
+          [話題継続・切り替え方針] に「判定: 話題を切り替える」が指定されているにもかかわらず、
+          返信文が現在の主題を深掘りしている場合（例: 同じ話題への質問・掘り下げ）
+          ※ 判定が「話題を継続する」の場合はこのルールを適用しないこと
+        判定: passed=false, should_regenerate=true, score=-50
+
       ## medium（品質劣化）
 
       - banned_word:
@@ -94,5 +101,8 @@ messages:
 
       [ユーザープロフィール]
       {profile_text}
+
+      [話題継続・切り替え方針]
+      {conversation_topic_strategy}
 
       上記を基に、返信ルールの遵守状況のみを評価してください。
