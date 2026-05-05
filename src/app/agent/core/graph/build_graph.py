@@ -4,7 +4,7 @@ from app.agent.core.config.settings import Settings
 from app.agent.core.nodes.action.node import ActionNode
 from app.agent.core.nodes.decision.node import DecisionNode
 from app.agent.core.nodes.final_reply_rewrite.node import FinalReplyRewriteNode
-from app.agent.core.nodes.finalize_reply.node import FinalizeReplyNode
+from app.agent.core.nodes.create_analysis_log.node import CreateAnalysisLogNode
 from app.agent.core.nodes.fixed_pipeline.node import FixedToolNode
 from app.agent.core.nodes.observe.node import ObserveNode
 from app.agent.core.schemas.state import ReactState
@@ -54,13 +54,13 @@ def build_react_graph():
     action_node = ActionNode()
     observe_node = ObserveNode()
     final_reply_rewrite_node = FinalReplyRewriteNode()
-    finalize_reply_node = FinalizeReplyNode()
+    create_analysis_log_node = CreateAnalysisLogNode()
 
     workflow.add_node("decision", decision_node.run)
     workflow.add_node("action", action_node.run)
     workflow.add_node("observe", observe_node.run)
     workflow.add_node("final_reply_rewrite", final_reply_rewrite_node.run)
-    workflow.add_node("finalize_reply", finalize_reply_node.run)
+    workflow.add_node("create_analysis_log", create_analysis_log_node.run)
 
     workflow.set_entry_point("decision")
     workflow.add_edge("decision", "action")
@@ -78,10 +78,10 @@ def build_react_graph():
         _route_after_observe,
         {
             "decision": "decision",
-            "final_reply_rewrite": "finalize_reply",
+            "final_reply_rewrite": "create_analysis_log",
         },
     )
-    workflow.add_edge("finalize_reply", END)
+    workflow.add_edge("create_analysis_log", END)
 
     return workflow.compile()
 
