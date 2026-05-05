@@ -10,9 +10,14 @@ messages:
       # ルール定義（重要度別）
 
       ## high（違反したら基本NG）
-      - max_characters:
-        内容: 返信全体が130文字を超える場合
-        alternative_text提案時は文章を削りすぎずなるべく元の文章を残すこと
+      - structure(初回メッセージの場合は除外):
+        内容: 返信は以下の3要素で構成すること
+          1. 共感（1文）
+          2. 自己開示（1文。相手からの質問には必ずここで答える）
+          3. 質問（1文。質問か具体的な話題提供かのいずれかを行う）
+
+      - sentence_count:
+        内容: 文は最大3文までとする
         判定: passed=false, should_regenerate=true, score=-50
         
       - no_hook:
@@ -25,6 +30,10 @@ messages:
 
       - repeated_empathy:
         内容: 過去の発言と同じ内容の共感を繰り返している
+        判定: passed=false, should_regenerate=true, score=-50
+
+      - redundancy:
+        内容: 共感表現を複数回繰り返さない
         判定: passed=false, should_regenerate=true, score=-50
 
       - vague_invitation:
