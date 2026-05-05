@@ -27,6 +27,10 @@ class ImprovementSuggestionSchema(BaseModel):
         description="指摘事項に対しての代替となるテキスト。",
     )
 
+    violated_rule: str | None = Field(
+        default=None,
+        description="違反したルール名（例: no_hook, too_many_questions など）。該当するルール定義のキー名を入れること。",
+    )
 
 
 _PRIORITY_RANK: dict[FeedbackPriority, int] = {

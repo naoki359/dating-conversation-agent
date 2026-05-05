@@ -10,6 +10,11 @@ messages:
       # ルール定義（重要度別）
 
       ## high（違反したら基本NG）
+      - max_characters:
+        内容: 返信全体が130文字を超える場合
+        alternative_text提案時は文章を削りすぎずなるべく元の文章を残すこと
+        判定: passed=false, should_regenerate=true, score=-50
+        
       - no_hook:
         内容: 質問または具体的な話題提供が1つもない
         判定: passed=false, should_regenerate=true, score=-50
@@ -34,6 +39,10 @@ messages:
         内容: 「〇〇ですし、△△です」という構文は、違和感があるため使用しないこと
         判定: passed=false, should_regenerate=true, score=-50
 
+      - avoid_comparison_question:
+        内容: 「AとBどっち？」「どっち派ですか？」のような単純な比較質問は禁止。会話が広がらず幼い印象を与えるため使用しないこと
+        判定: passed=false, should_regenerate=true, score=-50
+
       - mixed_sentence_role:
         内容: 以下のような異なる役割の文が「、」で接続されている場合は違反
           - 共感 → 自分の話
@@ -45,9 +54,10 @@ messages:
         判定: passed=false, should_regenerate=true, score=-50
 
         - question_specificity:
-          内容: 質問は「その人の体験・理由・具体例」を引き出す形にする
-            NG例: 「どっちが好き？」「よく行きますか？」
-            OK例: 「最近行ってよかった場所ありますか？」「特に印象に残ってる体験ってありますか？」
+          内容: |
+            質問は「思い出せばすぐ答えられる具体的な内容」にすること。
+            相手に考えさせすぎる抽象的・内省的な質問は禁止。
+          NGワード：どんなとき / なぜ / どう感じる
           判定: passed=false, should_regenerate=true, score=-50
 
       - topic_switch_violation:
@@ -88,7 +98,8 @@ messages:
       - should_regenerate: true/false
       - reasons: 箇条書きで 1-5 件
       - improvement_suggestions: 0-3 件のオブジェクト配列
-      - 各 improvement_suggestions 要素は {{ message, priority }} を持つこと
+      - 各 improvement_suggestions 要素は {{ message, priority, violated_rule, original_text, alternative_text }} を持つこと
+      - violated_rule にはルール定義のキー名（例: no_hook, too_many_questions, max_characters など）を入れること
       - 指摘事項に対しては必ず代替となるテキストを提示すること
 
   - role: user
