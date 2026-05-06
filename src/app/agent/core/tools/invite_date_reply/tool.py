@@ -23,6 +23,7 @@ class InviteDateReplyTool:
         self.llm = get_chat_model_gpt5_4()
         self.prompt = load_prompt_from_yaml(self._get_prompt_path())
         self.shops = self._load_shops()
+        self.schedule = self._load_schedule()
 
     def execute(self, execution_id: str | None = None) -> BaseToolResult:
         scoped_store = get_shared_store(execution_id)
@@ -49,6 +50,7 @@ class InviteDateReplyTool:
         latest_message_text = latest_message.get("message", "") if latest_message else ""
         conversation_facts_text = self._build_conversation_facts_text(conversation_facts)
         shops_catalog_text = self._build_shops_catalog_text()
+        schedule_text = self._build_schedule_text()
         plan_text = self._build_plan_text(
             selected_shop=selected_shop,
             selected_area=selected_area,
@@ -65,6 +67,7 @@ class InviteDateReplyTool:
                     "latest_message": latest_message_text or "最新メッセージはありません。",
                     "conversation_facts_text": conversation_facts_text,
                     "shops_catalog_text": shops_catalog_text,
+                    "schedule_text": schedule_text,
                     "plan_text": plan_text,
                     "call_alternative_text": call_alternative_text,
                 }
@@ -103,8 +106,15 @@ class InviteDateReplyTool:
     def _get_shops_path(self) -> Path:
         return Path(__file__).resolve().parent / "shops.json"
 
+    def _get_schedule_path(self) -> Path:
+        return Path(__file__).resolve().parent / "schedule.json"
+
     def _load_shops(self) -> list[dict[str, str]]:
         with self._get_shops_path().open("r", encoding="utf-8") as file:
+            return json.load(file)
+
+    def _load_schedule(self) -> dict:
+        with self._get_schedule_path().open("r", encoding="utf-8") as file:
             return json.load(file)
 
     def _find_latest_other_message(self, messages: list[dict]) -> dict | None:
@@ -193,24 +203,57 @@ class InviteDateReplyTool:
 
         return self.shops[0]
 
-    def _build_datetime_suggestion(self, available_time_value: str, time_slot: str) -> str:
-        value = available_time_value or ""
+    def _calc_available_start_time(self, end_time: str) -> str:
+        """終了時刻に1時間15分を加え、30分単位に切り上げた開始可能時刻を返す。"""
+        try:
+            hour, minute = map(int, end_time.split(":"))
+            total_minutes = hour * 60 + minute + 75
+            total_minutes = ((total_minutes + 29) // 30) * 30
+            return f"{total_minutes // 60}:{total_minutes % 60:02d}"
+        except (ValueError, AttributeError):
+            return "19:00"
 
-        if "金" in value and time_slot == "夜":
-            return "今度の金曜の夜"
-        if any(keyword in value for keyword in ("土", "日", "週末", "祝日")):
-            if time_slot == "昼":
-                return "今度の土日どちらかの昼"
-            if time_slot == "夜":
-                return "今度の土日どちらかの夜"
+    def _build_datetime_suggestion(self, available_time_value: str, time_slot: str) -> str:
+        """スケジュールと相手の希望を踏まえて日時案を構築する。"""
+        value = available_time_value or ""
+        default_avail = self.schedule.get("default_availability", {})
+        scheduled_items = self.schedule.get("scheduled_items", [])
+
+        prefers_weekend = any(kw in value for kw in ("土", "日", "週末", "祝日"))
+        prefers_weekday = "平日" in value and not prefers_weekend
+
+        # 全スロットを (priority, label) リストに集約
+        slots: list[tuple[int, str]] = []
+
+        holiday_avail = default_avail.get("holiday_afternoon", {})
+        if holiday_avail.get("free", False):
+            priority = holiday_avail.get("priority", 99)
+            label = "今度の土日の午後（13〜15時ごろ）" if time_slot == "昼" else "今度の土日の午後"
+            slots.append((priority, label))
+
+        for item in scheduled_items:
+            date = item.get("date", "")
+            end_time = item.get("end_time", "")
+            item_priority = item.get("priority", 99)
+            if date and end_time:
+                start_time = self._calc_available_start_time(end_time)
+                slots.append((item_priority, f"{date} {start_time}以降"))
+
+        weekday_avail = default_avail.get("weekday_evening", {})
+        if weekday_avail.get("free", False):
+            priority = weekday_avail.get("priority", 99)
+            slots.append((priority, "来週の平日夜"))
+
+        if not slots:
             return "今度の土日どちらかの15時ごろ"
-        if "平日" in value and time_slot == "夜":
-            return "来週どこかの平日夜"
-        if time_slot == "昼":
-            return "今度の土日どちらかの昼"
-        if time_slot == "夜":
-            return "来週どこかの夜"
-        return "今度の土日どちらかの15時ごろ"
+
+        # 相手が平日希望 → 土日以外のスロットを優先
+        if prefers_weekday:
+            weekday_slots = [(p, l) for p, l in slots if "土日" not in l]
+            if weekday_slots:
+                return min(weekday_slots, key=lambda x: x[0])[1]
+
+        return min(slots, key=lambda x: x[0])[1]
 
     def _build_call_alternative(self, profile: dict, messages: list[dict]) -> str | None:
         preference = str(profile.get("meeting_timing_preference") or "")
@@ -242,6 +285,55 @@ class InviteDateReplyTool:
             available_time_source: {available_time.get('source_quote', 'なし')}
             """
         ).strip()
+
+    def _build_schedule_text(self) -> str:
+        """スケジュール情報をLLM向けテキストに変換する。"""
+        lines: list[str] = []
+        default_avail = self.schedule.get("default_availability", {})
+        scheduled_items = self.schedule.get("scheduled_items", [])
+
+        if scheduled_items:
+            lines.append("予定済み:")
+            for item in scheduled_items:
+                date = item.get("date", "")
+                location = item.get("location", "")
+                end_time = item.get("end_time", "")
+                priority = item.get("priority", "-")
+                entry = f"- {date}: {location}で{end_time}まで予定あり（希望度{priority}）"
+                if end_time:
+                    start_time = self._calc_available_start_time(end_time)
+                    entry += f" → {start_time}以降は空き"
+                lines.append(entry)
+            lines.append("")
+
+        lines.append("デフォルト空き時間:")
+        holiday_avail = default_avail.get("holiday_afternoon", {})
+        if holiday_avail.get("free", False):
+            lines.append(f"- 休日（土日）の午後: 基本的に空き（希望度{holiday_avail.get('priority', '-')}）")
+        weekday_avail = default_avail.get("weekday_evening", {})
+        if weekday_avail.get("free", False):
+            lines.append(f"- 平日夕方〜夜: 基本的に空き（希望度{weekday_avail.get('priority', '-')}）")
+
+        # 優先度順にソートして表示
+        all_slots: list[tuple[int, str]] = []
+        if holiday_avail.get("free", False):
+            all_slots.append((holiday_avail.get("priority", 99), "休日の午後（土日）"))
+        for item in scheduled_items:
+            date = item.get("date", "")
+            end_time = item.get("end_time", "")
+            if date and end_time:
+                start_time = self._calc_available_start_time(end_time)
+                all_slots.append((item.get("priority", 99), f"{date} {start_time}以降"))
+        if weekday_avail.get("free", False):
+            all_slots.append((weekday_avail.get("priority", 99), "平日夜（一般）"))
+
+        if all_slots:
+            lines.append("")
+            lines.append("提案優先度（数字小さいほど高い）:")
+            for rank, (_, label) in enumerate(sorted(all_slots, key=lambda x: x[0]), start=1):
+                lines.append(f"{rank}. {label}")
+
+        return "\n".join(lines)
 
     def _build_shops_catalog_text(self) -> str:
         lines: list[str] = []
