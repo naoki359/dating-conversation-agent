@@ -21,7 +21,9 @@ messages:
       - should_regenerate: true/false
       - reasons: 箇条書きで 1-5 件
       - improvement_suggestions: 0-5 件のオブジェクト配列
-      - 各 improvement_suggestions 要素は {{ message, priority }} を持つこと
+      - 各 improvement_suggestions 要素は {{ message, priority, original_text, alternative_text }} を持つこと
+      - original_text には問題のある返信文の該当箇所を最小単位で抜き出すこと（なるべく全文は避け、指摘されている個所が明確になるようにすること）
+      - alternative_text には問題箇所の代替テキストを示すこと
       - priority は必ず "high" にすること
       - detected_risks: 箇条書きで 0-5 件
 

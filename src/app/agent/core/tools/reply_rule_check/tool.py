@@ -76,13 +76,13 @@ class ReplyRuleCheckTool:
                 scoped_canvas.get("reply_should_regenerate", False) or output["should_regenerate"]
             )
 
-            # append_improvement_suggestions(
-            #     scoped_canvas,
-            #     output["improvement_suggestions"],
-            #     default_priority="high",
-            # )
+            append_improvement_suggestions(
+                scoped_canvas,
+                output["improvement_suggestions"],
+                default_priority="high",
+            )
 
-            scoped_canvas["improvement_suggestions"] = output["improvement_suggestions"]
+            # scoped_canvas["improvement_suggestions"] = output["improvement_suggestions"]
 
             return BaseToolResult(
                 tool_name=self.name,
