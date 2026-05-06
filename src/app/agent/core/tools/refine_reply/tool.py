@@ -63,7 +63,7 @@ class RefineReplyTool:
                 },
             )
 
-        feedback_text = self._build_feedback_text(feedback_items)
+        feedback_text = self._build_feedback_text(feedback_items, original_text=original_reply)
         prompt_debug_text = ""
 
         try:
@@ -248,8 +248,14 @@ class RefineReplyTool:
 
         return current_loop_count <= self.DEFAULT_MEDIUM_PRIORITY_MAX_LOOP_COUNT
 
-    def _build_feedback_text(self, feedback_items: list[str]) -> str:
-        return "\n".join(f"- {item}" for item in feedback_items)
+    def _build_feedback_text(self, feedback_items: list[str], original_text: str = "") -> str:
+        lines: list[str] = []
+        if original_text:
+            lines.append(f"【修正対象の返信】\n{original_text}")
+            lines.append("")
+        lines.append("【指摘事項】")
+        lines.extend(f"- {item}" for item in feedback_items)
+        return "\n".join(lines)
 
     def _build_profile_text(self, profile: dict[str, Any]) -> str:
         return format_profile_text(

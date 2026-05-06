@@ -103,6 +103,7 @@ def coerce_improvement_suggestion(
         return ImprovementSuggestionSchema(
             message=message,
             priority=default_priority,
+            original_text=message,
             alternative_text=message,
         )
 
@@ -111,6 +112,7 @@ def coerce_improvement_suggestion(
         if not message:
             return None
         priority = _normalize_priority(raw_item.get("priority"), default_priority)
+        original_text = str(raw_item.get("original_text", "")).strip() or message
         alternative_text = _normalize_alternative_text(
             raw_item.get("alternative_text"),
             message,
@@ -118,6 +120,7 @@ def coerce_improvement_suggestion(
         return ImprovementSuggestionSchema(
             message=message,
             priority=priority,
+            original_text=original_text,
             alternative_text=alternative_text,
         )
 

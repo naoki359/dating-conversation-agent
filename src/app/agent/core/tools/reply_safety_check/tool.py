@@ -124,6 +124,7 @@ class ReplySafetyCheckTool:
                 ImprovementSuggestionSchema(
                     message="性的な含みを完全に外し、安心感のある話題に置き換えてください。",
                     priority="high",
+                    original_text=reply_text,
                     alternative_text="性的な含みのない、安心感のある話題に言い換える",
                 )
             )
@@ -135,6 +136,7 @@ class ReplySafetyCheckTool:
                 ImprovementSuggestionSchema(
                     message="否定や攻撃ではなく、相手を尊重する表現に修正してください。",
                     priority="high",
+                    original_text=reply_text,
                     alternative_text="相手を尊重する、やわらかい表現に言い換える",
                 )
             )
@@ -146,6 +148,7 @@ class ReplySafetyCheckTool:
                 ImprovementSuggestionSchema(
                     message="相手が断りやすい余白を残した誘い方に修正してください。",
                     priority="high",
+                    original_text=reply_text,
                     alternative_text="相手が断りやすい余白を残した、やわらかい誘い方に言い換える",
                 )
             )

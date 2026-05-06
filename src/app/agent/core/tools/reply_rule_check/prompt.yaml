@@ -76,6 +76,39 @@ messages:
           ※ 判定が「話題を継続する」の場合はこのルールを適用しないこと
         判定: passed=false, should_regenerate=true, score=-50
 
+      - safe_response_pattern:
+        内容: |
+            未知の固有名詞に対しては、以下のいずれかの構造で返信すること：
+
+            パターンA（未知＋質問）：
+            「〇〇っていうお店なんですね！初めて聞きました😊」
+            「どんなところが良かったんですか？」
+
+            パターンB（体験寄せ）：
+            「〇〇行かれたんですね！いいですね😊」
+            「どんなところが印象に残りました？」
+
+            ※固有名詞の説明や評価には触れないこと
+
+        判定: passed=false, should_regenerate=true, score=-40
+
+      - optional_unknown_expression:
+        内容: |
+            固有名詞に対して知識がない場合、以下のいずれかの自然な反応を選択すること：
+
+            ① 未知を軽く表現する
+               例：「〇〇っていうお店なんですね！」
+                   「初めて聞きました！」
+
+            ② 体験ベースで受ける
+               例：「行かれたんですね！」
+                   「いいですね😊」
+
+            ※毎回「知らない」と明言する必要はない
+            ※会話の自然さを優先すること
+
+        判定: passed=false, should_regenerate=true, score=-30
+
       ## medium（品質劣化）
 
       - banned_word:
@@ -108,6 +141,7 @@ messages:
       - reasons: 箇条書きで 1-5 件
       - improvement_suggestions: 0-3 件のオブジェクト配列
       - 各 improvement_suggestions 要素は {{ message, priority, violated_rule, original_text, alternative_text }} を持つこと
+      - original_text には問題のある返信文の該当箇所を最小単位で抜き出すこと（なるべく全文は避け、指摘されている個所が明確になるようにすること）
       - violated_rule にはルール定義のキー名（例: no_hook, too_many_questions, max_characters など）を入れること
       - 指摘事項に対しては必ず代替となるテキストを提示すること
 
