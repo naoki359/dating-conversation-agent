@@ -1,0 +1,26 @@
+{
+  "scheduled_items": [
+    {
+      "date": "5月7日",
+      "location": "浜松町",
+      "end_time": "17:45",
+      "priority": 2
+    },
+    {
+      "date": "5月11日",
+      "location": "浜松町",
+      "end_time": "17:45",
+      "priority": 2
+    }
+  ],
+  "default_availability": {
+    "holiday_afternoon": {
+      "free": true,
+      "priority": 1
+    },
+    "weekday_evening": {
+      "free": true,
+      "priority": 3
+    }
+  }
+}
