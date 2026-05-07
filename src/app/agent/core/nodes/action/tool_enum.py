@@ -41,7 +41,7 @@ class ToolEnum(Enum):
     INVITE_DATE_REPLY = (
         InviteDateReplyTool().execute,
         "重要情報と店舗候補を使って、デート場所と日時を含む誘い文を生成する",
-        "会話の継続を目的とした返信には使用しないこと。今回の実行で INVITE_DATE_REPLY を使用した場合は GENERATE_REPLY を使わないこと。返信案を生成したあとは、同じ生成系ツールを続けずに EVALUATE_REPLY を優先すること。",
+        "会話の継続を目的とした返信には使用しないこと。今回の実行で INVITE_DATE_REPLY を使用した場合は GENERATE_REPLY を使わないこと。返信案を生成したあとは、同じ生成系ツールを続けずに EVALUATE_INVITE_REPLY を優先すること。",
         "デート打診用の返信文が生成され、必要に応じて通話の代替案も提示できる状態になる"
     )
 
