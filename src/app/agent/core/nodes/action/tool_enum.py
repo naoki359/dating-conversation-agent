@@ -6,6 +6,7 @@ from app.agent.core.tools.invite_date_reply.tool import InviteDateReplyTool
 from app.agent.core.tools.generate_first_message.tool import GenerateFirstMessageTool
 from app.agent.core.tools.get_history_and_facts.tool import GetHistoryAndFactsTool
 from app.agent.core.tools.generate_reply.tool import GenerateReplyTool
+from app.agent.core.tools.evaluate_invite_reply.tool import EvaluateInviteReplyTool
 from app.agent.core.tools.evaluate_reply.tool import EvaluateReplyTool
 from app.agent.core.tools.refine_reply.tool import RefineReplyTool
 
@@ -63,6 +64,13 @@ class ToolEnum(Enum):
         "生成済み返信の安全性、返信ルール、品質、プロフィール適合度を一括評価する",
         "GENERATE_REPLY または INVITE_DATE_REPLY の直後に優先して使用すること。未評価の生成済み返信がある場合は、他の生成系ツールより先に使用すること。",
         "安全性、返信ルール、返信品質、プロフィール適合度、改善提案が得られ、改善判断ができる状態になる"
+    )
+
+    EVALUATE_INVITE_REPLY = (
+        EvaluateInviteReplyTool().execute,
+        "デートへ誘う返信の安全性とデート誘い専用ルールを一括評価する",
+        "INVITE_DATE_REPLY の直後に使用すること。EVALUATE_REPLY とは別物であり、通常の返信評価には使用しないこと。",
+        "安全性、デート誘いルール適合度、改善提案が得られ、再生成判断ができる状態になる"
     )
 
     def __init__(self, method, description, important_notes, completion_state):
