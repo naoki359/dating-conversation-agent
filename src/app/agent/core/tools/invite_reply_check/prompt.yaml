@@ -12,7 +12,7 @@ messages:
       ## high（違反したら基本NG）
 
       - vague_datetime:
-        内容: デートの日時が具体的でない（例：「いつか」「近いうちに」「都合の良いとき」など）
+        内容: デートの日時が具体的でない（例：「いつか」「近いうちに」「都合の良いとき」「〇〇日の午後」など）。必ず具体的な日時を提示すること
         判定: passed=false, should_regenerate=true, score=-50
 
       - vague_location:
@@ -26,10 +26,6 @@ messages:
       - profile_mismatch:
         内容: 提案している場所や内容が、相手のプロフィールや会話履歴から得られる好みや状況と明らかに合っていない
               （例：魚が苦手と書いてあるのに寿司屋を提案、遠距離なのに近場すぎる場所を提案）
-        判定: passed=false, should_regenerate=true, score=-40
-
-      - too_many_questions:
-        内容: 質問（「？」）が2つ以上ある
         判定: passed=false, should_regenerate=true, score=-40
 
       - pressuring_expression:
@@ -50,12 +46,21 @@ messages:
         内容: なぜそのデートに誘うのかの自然な理由付けがない（会話の文脈から唐突に感じる）
         判定: passed=true, should_regenerate=false, score=-10
 
+      # 改善提案に関して（improvement_suggestions）
+      - ルール定義上highに違反した場合は、必ず改善提案を出すこと
+      - 改善提案は5つまでとすること
+      - improvement_suggestionsと違反したルールは必ず対応させること
+
       # 出力ルール
       - rule_score: 100点始点で違反分を減点した合計（0〜100）
       - passed: rule_score >= 70 かつ high 違反がない場合に true
       - should_regenerate: passed=false の場合は true、それ以外は false
       - reasons: 違反・問題点を箇条書きで 1-5 件。問題がなければ「問題なし」を返す
-      - improvement_suggestions: 改善が必要な場合 1-5 件のオブジェクト配列。各要素は message / priority / original_text / alternative_text を持つこと
+      - improvement_suggestions: 0-5 件のオブジェクト配列
+      - 各 improvement_suggestions 要素は {{ message, priority, violated_rule, original_text, alternative_text }} を持つこと
+      - original_text には問題のある返信文の該当箇所を最小単位で抜き出すこと（なるべく全文は避け、指摘されている箇所が明確になるようにすること）
+      - violated_rule にはルール定義のキー名（例: vague_datetime, vague_location, too_many_questions など）を入れること
+      - 指摘事項に対しては必ず代替となるテキストを提示すること
 
   - role: user
     content: |
