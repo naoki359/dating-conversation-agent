@@ -1,86 +1,66 @@
 [
   {
-    "name": "新宿三丁目クラフト食堂",
+    "name": "酒場つむぎ堂 新宿店",
     "area": "新宿",
-    "time_slot": "夜",
     "type": "居酒屋",
-    "url": "https://example.com/shops/shinjuku-craft-shokudo"
+    "time_slot": "18:00～",
+    "url": "https://tabelog.com/tokyo/A1304/A130401/13268476/",
+    "notes": ""
   },
   {
-    "name": "新宿御苑前ブリューワーズテーブル",
+    "name": "アティックルーム新宿",
     "area": "新宿",
-    "time_slot": "夕方",
     "type": "カフェ",
-    "url": "https://example.com/shops/shinjuku-brewers-table"
+    "time_slot": "14:00～20:00",
+    "url": "https://tabelog.com/tokyo/A1304/A130401/13181935/",
+    "notes": ""
   },
   {
-    "name": "池袋西口ブックカフェ灯り",
+    "name": "酒場 つむぎ堂 池袋店",
     "area": "池袋",
-    "time_slot": "昼",
-    "type": "カフェ",
-    "url": "https://example.com/shops/ikebukuro-book-cafe-akari"
+    "type": "居酒屋",
+    "time_slot": "18:00～",
+    "url": "https://tabelog.com/tokyo/A1305/A130501/13318800/",
+    "notes": ""
   },
   {
-    "name": "池袋駅前小皿バル",
+    "name": "トラットリア クアルト",
     "area": "池袋",
-    "time_slot": "夜",
-    "type": "居酒屋",
-    "url": "https://example.com/shops/ikebukuro-kozara-bal"
-  },
-  {
-    "name": "新橋ガード下ハイボール堂",
-    "area": "新橋",
-    "time_slot": "夜",
-    "type": "居酒屋",
-    "url": "https://example.com/shops/shimbashi-highball-do"
-  },
-  {
-    "name": "新橋テラス珈琲スタンド",
-    "area": "新橋",
-    "time_slot": "昼",
     "type": "カフェ",
-    "url": "https://example.com/shops/shimbashi-terrace-coffee-stand"
+    "time_slot": "14:00～20:00",
+    "url": "https://tabelog.com/tokyo/A1305/A130501/13243685/",
+    "notes": ""
   },
   {
-    "name": "上野公園口カフェ蒼",
+    "name": "食と酒 Sel",
     "area": "上野",
-    "time_slot": "昼",
-    "type": "カフェ",
-    "url": "https://example.com/shops/ueno-cafe-ao"
-  },
-  {
-    "name": "上野仲町しっとり酒場",
-    "area": "上野",
-    "time_slot": "夜",
     "type": "居酒屋",
-    "url": "https://example.com/shops/ueno-shittori-sakaba"
+    "time_slot": "18:00～",
+    "url": "https://tabelog.com/tokyo/A1311/A131101/13260622/",
+    "notes": ""
   },
   {
-    "name": "上野不忍テラスラウンジ",
+    "name": "WIRED CAFE アトレ上野店",
     "area": "上野",
-    "time_slot": "夕方",
     "type": "カフェ",
-    "url": "https://example.com/shops/ueno-shinobazu-terrace-lounge"
+    "time_slot": "14:00～20:00",
+    "url": "https://tabelog.com/tokyo/A1311/A131101/13047600/",
+    "notes": ""
   },
   {
-    "name": "池袋南口テラスダイナー",
-    "area": "池袋",
-    "time_slot": "夕方",
-    "type": "カフェ",
-    "url": "https://example.com/shops/ikebukuro-terrace-diner"
-  },
-  {
-    "name": "新宿東口ネオ酒場みのり",
-    "area": "新宿",
-    "time_slot": "夜",
+    "name": "美食米門 品川",
+    "area": "品川",
     "type": "居酒屋",
-    "url": "https://example.com/shops/shinjuku-neo-sakaba-minori"
+    "time_slot": "18:00～",
+    "url": "https://tabelog.com/tokyo/A1314/A131403/13005727/",
+    "notes": ""
   },
   {
-    "name": "新橋レンガ通り夕暮れカフェ",
-    "area": "新橋",
-    "time_slot": "夕方",
+    "name": "GOOD MORNING CAFE 品川シーズンテラス",
+    "area": "品川",
     "type": "カフェ",
-    "url": "https://example.com/shops/shimbashi-yugure-cafe"
+    "time_slot": "14:00～20:00",
+    "url": "https://tabelog.com/tokyo/A1314/A131403/13181409/",
+    "notes": ""
   }
 ]
