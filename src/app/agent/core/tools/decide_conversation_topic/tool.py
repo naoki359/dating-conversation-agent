@@ -45,6 +45,7 @@ class DecideConversationTopicTool:
         scoped_canvas = get_shared_canvas(execution_id)
 
         messages = scoped_store.get("conversation", {}).get("messages", [])
+        now_hint = scoped_store.get("conversation", {}).get("now_hint", "")
 
         # 会話履歴が不十分な場合は AnalyzeConversationTriggersTool に委譲
         if not self._has_sufficient_history(messages):
@@ -55,6 +56,14 @@ class DecideConversationTopicTool:
                 should_continue_topic=True,
                 reasoning="会話履歴が不十分なため、AnalyzeConversationTriggersTool を実行しました。",
             )
+            if now_hint:
+                default_strategy = ConversationTopicStrategySchema(
+                    current_topic="",
+                    same_topic_turns=0,
+                    should_continue_topic=True,
+                    continuation_policy=f"ユーザーヒント（最優先）: {now_hint}",
+                    reasoning=f"ユーザーヒントに従い方針を設定しました: {now_hint}",
+                )
             scoped_canvas["conversation_topic_strategy"] = default_strategy.model_dump()
             return BaseToolResult(
                 tool_name=self.name,
@@ -77,6 +86,7 @@ class DecideConversationTopicTool:
                     "self_profile_text": self_profile_text,
                     "profile_text": profile_text,
                     "conversation_text": conversation_text,
+                    "now_hint": now_hint or "なし",
                 }
             )
 

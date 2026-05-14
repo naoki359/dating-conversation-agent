@@ -41,14 +41,19 @@ class GetHistoryTool():
         picture = data.get("picture")
         if picture is not None and isinstance(profile, dict) and "picture" not in profile:
             profile["picture"] = picture
-        conversation = data.get("conversation", {}).get("messages", [])
-        updated_at = data.get("conversation", {}).get("updated_at", "")
+        conversation_raw = data.get("conversation", {})
+        conversation = conversation_raw.get("messages", [])
+        updated_at = conversation_raw.get("updated_at", "")
+        now_hint = conversation_raw.get("now_hint", "")
 
         scoped_store["profile"] = profile
-        scoped_store["conversation"] = {
+        conversation_data: dict = {
             "messages": conversation,
             "updated_at": updated_at,
         }
+        if now_hint:
+            conversation_data["now_hint"] = now_hint
+        scoped_store["conversation"] = conversation_data
 
         result = GetHistoryResultSchema(
             partner_profile=scoped_store["profile"],
