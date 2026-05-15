@@ -18,8 +18,8 @@ from app.agent.core.utils.shared_store import get_shared_canvas, get_shared_stor
 
 _JST = timezone(timedelta(hours=9))
 
-# ヒント履歴ファイル: data/config/hints.yaml（全ユーザー共通の1ファイル）
-_HINTS_FILE = Path(__file__).resolve().parents[6] / "data" / "config" / "hints.yaml"
+# ヒント履歴ファイル: agent_logs/hints.yaml（全ユーザー共通の1ファイル）
+_HINTS_FILE = Path(__file__).resolve().parents[6] / "agent_logs" / "hints.yaml"
 
 
 class GenerateHintCandidatesTool:
@@ -31,7 +31,7 @@ class GenerateHintCandidatesTool:
 
     name = "generate_hint_candidates"
     description = (
-        "返信生成後に次回の会話で役立つヒントを1件自動生成し、data/config/hints.yaml に追記する。"
+        "返信生成後に次回の会話で役立つヒントを1件自動生成し、agent_logs/hints.yaml に追記する。"
         "生成したヒントは現時点では参照しない（将来的なユーザー嗜好性学習のために保持）。"
     )
 
@@ -96,7 +96,7 @@ class GenerateHintCandidatesTool:
             return BaseToolResult(
                 tool_name=self.name,
                 success=True,
-                summary="ヒントを生成し data/config/hints.yaml に追記しました。",
+                summary="ヒントを生成し agent_logs/hints.yaml に追記しました。",
                 tool_result=hint_result.model_dump(),
             )
 
@@ -109,7 +109,7 @@ class GenerateHintCandidatesTool:
             )
 
     def _append_hint_to_file(self, user_id: str, hint: str, conversation_summary: str) -> None:
-        """data/config/hints.yaml に新しいヒントエントリを追記する。"""
+        """agent_logs/hints.yaml に新しいヒントエントリを追記する。"""
         _HINTS_FILE.parent.mkdir(parents=True, exist_ok=True)
 
         entries: list = []

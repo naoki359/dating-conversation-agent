@@ -89,6 +89,7 @@ DEFAULT_SELF_PROFILE: Profile = {
         [basic_info]
         - name: 角田 直樹
         - age: 32
+        - location: 所沢
 
         [interests]
         - お酒は好き
