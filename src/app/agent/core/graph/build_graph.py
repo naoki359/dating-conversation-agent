@@ -10,6 +10,7 @@ from app.agent.core.nodes.observe.node import ObserveNode
 from app.agent.core.schemas.state import ReactState
 from app.agent.core.tools.evaluate_reply_candidates.tool import EvaluateReplyCandidatesTool
 from app.agent.core.tools.generate_reply_candidates.tool import GenerateReplyCandidatesTool
+from app.agent.core.tools.generate_hint_candidates.tool import GenerateHintCandidatesTool
 from app.agent.core.tools.get_history_and_facts.tool import GetHistoryAndFactsTool
 from app.agent.core.tools.refine_reply_candidates.tool import RefineReplyCandidatesTool
 
@@ -55,23 +56,20 @@ def build_react_graph():
     observe_node = ObserveNode()
     final_reply_rewrite_node = FinalReplyRewriteNode()
     create_analysis_log_node = CreateAnalysisLogNode()
+    generate_hint_candidates_node = FixedToolNode(
+        node_name="generate_hint_candidates",
+        tool=GenerateHintCandidatesTool(),
+    )
 
     workflow.add_node("decision", decision_node.run)
     workflow.add_node("action", action_node.run)
     workflow.add_node("observe", observe_node.run)
     workflow.add_node("final_reply_rewrite", final_reply_rewrite_node.run)
     workflow.add_node("create_analysis_log", create_analysis_log_node.run)
+    workflow.add_node("generate_hint_candidates", generate_hint_candidates_node.run)
 
     workflow.set_entry_point("decision")
     workflow.add_edge("decision", "action")
-    # workflow.add_conditional_edges(
-    #     "action",
-    #     _route_after_action,
-    #     {
-    #         "observe": "observe",
-    #         "decision": "decision",
-    #     },
-    # )
     workflow.add_edge("action", "observe")
     workflow.add_conditional_edges(
         "observe",
@@ -81,7 +79,8 @@ def build_react_graph():
             "final_reply_rewrite": "create_analysis_log",
         },
     )
-    workflow.add_edge("create_analysis_log", END)
+    workflow.add_edge("create_analysis_log", "generate_hint_candidates")
+    workflow.add_edge("generate_hint_candidates", END)
 
     return workflow.compile()
 
@@ -111,6 +110,10 @@ def build_fixed_graph():
         node_name="fixed_final_evaluate_reply_candidates_node",
         tool=EvaluateReplyCandidatesTool(),
     )
+    generate_hint_candidates_fixed_node = FixedToolNode(
+        node_name="fixed_generate_hint_candidates_node",
+        tool=GenerateHintCandidatesTool(),
+    )
 
     workflow.add_node("fixed_get_history_and_facts", get_history_and_facts_node.run)
     workflow.add_node("fixed_generate_reply_candidates", generate_reply_candidates_node.run)
@@ -123,6 +126,7 @@ def build_fixed_graph():
         "fixed_final_evaluate_reply_candidates",
         final_evaluate_reply_candidates_node.run,
     )
+    workflow.add_node("fixed_generate_hint_candidates", generate_hint_candidates_fixed_node.run)
 
     workflow.set_entry_point("fixed_get_history_and_facts")
     workflow.add_conditional_edges(
@@ -159,6 +163,14 @@ def build_fixed_graph():
     )
     workflow.add_conditional_edges(
         "fixed_final_evaluate_reply_candidates",
+        _route_after_fixed_step,
+        {
+            "next": "fixed_generate_hint_candidates",
+            "end": END,
+        },
+    )
+    workflow.add_conditional_edges(
+        "fixed_generate_hint_candidates",
         _route_after_fixed_step,
         {
             "next": END,

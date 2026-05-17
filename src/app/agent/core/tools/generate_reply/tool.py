@@ -36,6 +36,7 @@ class GenerateReplyTool:
         conversation_facts = scoped_canvas.get("conversation_facts", {})
         selected_trigger_keyword = scoped_canvas.get("selected_trigger_keyword", "")
         conversation_topic_strategy = scoped_canvas.get("conversation_topic_strategy", {})
+        now_hint = conversation.get("now_hint", "")
 
         # 最新のメッセージ（相手からのメッセージ）を取得
         latest_message = None
@@ -68,6 +69,7 @@ class GenerateReplyTool:
                     "latest_message": latest_message_text,
                     "selected_trigger_keyword": selected_trigger_keyword or "なし",
                     "conversation_topic_strategy": conversation_topic_strategy_text,
+                    "now_hint": now_hint or "なし",
                 }
             )
 

@@ -15,6 +15,10 @@ messages:
         内容: デートの日時が具体的でない（例：「いつか」「近いうちに」「都合の良いとき」「〇〇日の午後」など）。必ず具体的な日時を提示すること
         判定: passed=false, should_regenerate=true, score=-50
 
+      - vague_date:
+        内容: 提案した日付が急すぎる（最低でも3日後以降である必要がある）
+        判定: passed=false, should_regenerate=true, score=-50
+
       - vague_location:
         内容: デートの場所が具体的でない（例：「どこかで」「お店に」など、エリアや店名が不明）
         判定: passed=false, should_regenerate=true, score=-50

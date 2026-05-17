@@ -49,7 +49,7 @@ messages:
         判定: passed=false, should_regenerate=true, score=-50
 
       - avoid_comparison_question:
-        内容: 「AとBどっち？」「どっち派ですか？」のような単純な比較質問は禁止。会話が広がらず幼い印象を与えるため使用しないこと
+        内容: 「AとBどっち？」「どっち派ですか？」「AとBどちらをやる時間が多いですか」のような単純な比較質問は禁止。会話が広がらず幼い印象を与えるため使用しないこと
         判定: passed=false, should_regenerate=true, score=-50
 
       - mixed_sentence_role:

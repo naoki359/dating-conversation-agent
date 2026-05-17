@@ -55,9 +55,13 @@ class Profile(TypedDict):
 # ============================================
 # Conversation: 会話履歴
 # ============================================
-class Conversation(TypedDict):
+class _ConversationRequired(TypedDict):
     messages: list[Message]
     updated_at: str
+
+
+class Conversation(_ConversationRequired, total=False):
+    now_hint: str
 
 
 # ============================================
@@ -85,6 +89,7 @@ DEFAULT_SELF_PROFILE: Profile = {
         [basic_info]
         - name: 角田 直樹
         - age: 32
+        - location: 所沢
 
         [interests]
         - お酒は好き
@@ -273,6 +278,11 @@ class Canvas(TypedDict, total=False):
     # 話題継続・切り替え方針
     # -----------------------------------
     conversation_topic_strategy: "ConversationTopicStrategy"
+
+    # -----------------------------------
+    # ヒント候補（返信生成後に自動生成、将来的な嗜好性モデルへの基盤）
+    # -----------------------------------
+    hint_candidate: str
 
 
 class ConversationTopicStrategy(TypedDict, total=False):

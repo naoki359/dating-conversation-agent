@@ -98,6 +98,7 @@ def _build_initial_state(data: dict[str, Any]) -> ReactState:
         "conversation": {
             "messages": normalized_messages,
             "updated_at": str(conversation_raw.get("updated_at", "")),
+            "now_hint": conversation_raw.get("now_hint", ""),
         },
         # ===== ReAct 初期値 =====
         "current_thought": "",

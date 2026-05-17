@@ -11,6 +11,18 @@
       "location": "浜松町",
       "end_time": "17:45",
       "priority": 2
+    },
+    {
+      "date": "5月18日",
+      "location": "浜松町",
+      "end_time": "17:45",
+      "priority": 2
+    },
+    {
+      "date": "5月20日",
+      "location": "浜松町",
+      "end_time": "17:45",
+      "priority": 2
     }
   ],
   "default_availability": {
