@@ -95,6 +95,22 @@ uv run mlflow server --host 127.0.0.1 --port 5000
 uv run python -m uvicorn app.agent.entrypoint:app --reload --app-dir src 
 ```
 
+### プロフィールファイルの作成
+
+`data/self_profile.sample.yaml`をコピーして`self_profile.yaml`を作成してください。
+
+**bash / macOS / Linux:**
+
+```bash
+cp data/self_profile.sample.yaml data/self_profile.yaml
+```
+
+**PowerShell:**
+
+```powershell
+Copy-Item data/self_profile.sample.yaml data/self_profile.yaml
+```
+
 ### 返信生成リクエスト
 
 `id` にはリクエスト対象のユーザーID（`data/test_user/` に配置した YAML ファイルのベース名）を指定します。
