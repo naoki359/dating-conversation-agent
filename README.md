@@ -87,14 +87,6 @@ AGENT_PIPELINE_MODE=react
 uv run mlflow server --host 127.0.0.1 --port 5000
 ```
 
-## 実行
-
-### サーバー起動
-
-```bash
-uv run python -m uvicorn app.agent.entrypoint:app --reload --app-dir src 
-```
-
 ### プロフィールファイルの作成
 
 `data/self_profile.sample.yaml`をコピーして`self_profile.yaml`を作成してください。
@@ -109,6 +101,14 @@ cp data/self_profile.sample.yaml data/self_profile.yaml
 
 ```powershell
 Copy-Item data/self_profile.sample.yaml data/self_profile.yaml
+```
+
+## 実行
+
+### サーバー起動
+
+```bash
+uv run python -m uvicorn app.agent.entrypoint:app --reload --app-dir src 
 ```
 
 ### 返信生成リクエスト
