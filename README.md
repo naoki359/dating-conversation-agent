@@ -67,7 +67,7 @@ FastAPI (entrypoint)
 ### インストール
 
 ```bash
-git clone https://github.com/your-org/dating-conversation-agent.git
+git clone https://github.com/naoki359/dating-conversation-agent.git
 cd dating-conversation-agent
 uv sync
 ```
@@ -83,7 +83,7 @@ OPENAI_API_KEY=your_openai_api_key
 ### MLflow の起動
 
 ```bash
-mlflow server --host 127.0.0.1 --port 5000
+uv run mlflow server --host 127.0.0.1 --port 5000
 ```
 
 ## 実行
@@ -91,15 +91,28 @@ mlflow server --host 127.0.0.1 --port 5000
 ### サーバー起動
 
 ```bash
-uvicorn src.app.agent.entrypoint:app --reload
+uv run python -m uvicorn app.agent.entrypoint:app --reload --app-dir src 
 ```
 
 ### 返信生成リクエスト
 
+`id` にはリクエスト対象のユーザーID（`data/test_user/` に配置した YAML ファイルのベース名）を指定します。
+エージェントが会話履歴・プロフィールを読み込み、返信候補を生成して返します。
+
+**bash / macOS / Linux:**
+
 ```bash
 curl -X POST http://127.0.0.1:8000/reply \
   -H "Content-Type: application/json" \
-  -d '{"id": "with_0001_test"}'
+  -d '{"id": "with_0003_test"}'
+```
+
+**PowerShell:**
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/reply `
+  -ContentType "application/json" `
+  -Body '{"id": "with_0003_test"}'
 ```
 
 ヘルスチェック:
@@ -108,9 +121,13 @@ curl -X POST http://127.0.0.1:8000/reply \
 curl http://127.0.0.1:8000/health
 ```
 
+#### 捕捉（推奨）
+
+VSCodeの拡張機能であるREST Clientをインストールすることで`./requests/reply.rest`からAPIのキックが可能
+
 ## ユーザーデータ形式
 
-`data/user/` に YAML ファイルを配置します。
+`data/test_user/` に YAML ファイルを配置します。
 
 ファイル名はuser_idと同一（with_xxxx.yaml）にすること
 
