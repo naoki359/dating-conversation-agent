@@ -1,321 +1,168 @@
-# 💬 Dating Conversation Agent
+# Dating Conversation Agent
 
-**― マッチングアプリの会話を最適化するエージェント ―**
+マッチングアプリの返信を自動生成する、LangGraph ベースの会話支援エージェントです。
 
----
+## 概要
 
-## 🟦 Overview
+> 詳細は [初回デート成立率を高めるAIエージェントの開発](docs/20260523_%E5%88%9D%E5%9B%9E%E3%83%87%E3%83%BC%E3%83%88%E6%88%90%E7%AB%8B%E7%8E%87%E3%82%92%E9%AB%98%E3%82%81%E3%82%8BAI%E3%82%A8%E3%83%BC%E3%82%B8%E3%82%A7%E3%83%B3%E3%83%88%E3%81%AE%E9%96%8B%E7%99%BA.pdf) を参照してください。
 
-本プロジェクトは、マッチングアプリにおける
-**初回デート成立までの会話を最適化するエージェントシステム**である。
+単なるテキスト生成ツールではなく、会話の文脈・相手の温度感・フェーズを分析したうえで **意思決定（ReAct）** を行い、最適な返信を生成します。
 
-従来の「返信を考える」という認知負荷の高い作業を支援し、
-会話の継続率およびデート成立率の向上を目的とする。
+![overview](docs/images/overview.png)
 
-また、本システムは単なるAIツールではなく、
-**エージェントの振る舞いを継続的に改善する（Agentic）システム**として設計されている。
+### 解決する課題
 
----
+- 返信文章を考えるコストが高い
+- 何を書けばいいか分からず無難な返信になりがち
+- 相手の温度感・誘うタイミングが判断できない
 
-## 🟦 Application
+### アプローチ
 
-### ■ Purpose
+1. **状況分析** — 会話フェーズ・相手の興味・自分のプロフィールとの整合性を把握
+2. **意思決定（ReAct）** — 質問・共感・自己開示・デートの誘いなどアクションを選択
+3. **返信生成** — 自然さ・流れを考慮したメッセージを生成・評価・改善
 
-ユーザーはマッチングアプリにおいて以下の課題を抱えている：
+## アーキテクチャ
 
-* 何を返信すべきか分からない
-* 会話が続かない
-* デートに誘うタイミングが分からない
+![react-architecture](docs/images/react_architecture.png)
 
-本システムはこれらの課題に対し、
-
-* 会話文脈の理解
-* 会話フェーズの推定
-* 複数の返信候補生成
-* 次のアクションの提案
-
-を行うことで、
-
-👉 **「会話の最適化」と「意思決定の支援」** を提供する。
-
----
-
-### ■ Value Proposition
-
-#### 1. 認知負荷の低減
-
-返信内容を毎回考える必要をなくし、意思決定コストを削減する。
-
-#### 2. 会話品質の向上
-
-文脈・温度感・フェーズを考慮した返信により、会話継続率を向上させる。
-
-#### 3. 成果への寄与
-
-最終的なKPIである「初回デート成立率」の向上を目指す。
-
----
-
-### ■ Target Users
-
-* マッチングアプリ利用者
-* 会話に苦手意識を持つユーザー
-* 効率的に出会いを進めたいユーザー
-
----
-
-### ■ KPI (Success Metrics)
-
-本システムは以下の指標で評価される：
-
-* 返信率
-* 会話継続率
-* 質問返し率
-* デート打診成功率
-
----
-
-## 🟦 System Design
-
-### ■ Architecture
-
-```text
-Chrome Extension（UI / DOM操作）
-        ↓
-Local Agent Server（FastAPI）
-        ↓
-LLM / Logging DB / Evaluation Engine
+```
+FastAPI (entrypoint)
+  └─ LangGraph (build_graph.py)
+       ├─ DecisionNode    — 次のアクションを意思決定
+       ├─ ActionNode      — ツールを実行
+       ├─ ObserveNode     — 実行結果を観察・ループ制御
 ```
 
----
+すべてのノードは `BaseNode` を継承し、ログ出力・状態管理を共通化しています。
 
-### ■ Design Philosophy
+### 主要ツール
 
-本システムは、従来の決定的なロジックではなく、
-**エージェントの振る舞い（Behavior）を中心に設計される。**
+| ツール | 役割 |
+|---|---|
+| `get_history_and_facts` | 相手のプロフィールと会話履歴を取得し、住んでいる地域などの重要な情報を抽出する |
+| `generate_reply` | 相手のプロフィールと会話履歴を参考に、自然な返信を生成する |
+| `invite_date_reply` | 重要情報と店舗候補を使って、デート場所と日時を含む誘い文を生成する |
+| `generate_first_message` | 会話履歴がない相手に対して、プロフィールを基に自然で具体性のある初回メッセージを生成する |
+| `refine_reply` | 評価結果の指摘事項を反映して、既存の返信案を修正・改善する |
+| `evaluate_reply` | 生成済み返信の安全性・ルール・品質・プロフィール適合度を一括評価する |
+| `evaluate_invite_reply` | デートへ誘う返信の安全性とデート誘い専用ルールを一括評価する |
 
-* 固定ロジックではなく、文脈に応じた振る舞い
-* Pass/Failではなく、多軸評価
-* 出力ではなく、意思決定過程の観測
+### 状態スキーマ
 
----
+- **ReactState** — LangGraph ノード間を流れる作業状態（思考・意思決定・アクション結果）
+- **CanvasData** — 最終成果物（返信内容・候補・選択結果）
 
-### ■ Agent Behavior Flow
+![design-points](docs/images/design_points.png)
 
-エージェントは以下のプロセスで動作する：
+## セットアップ
 
-1. 会話履歴の取得
-2. 会話状態の推定（フェーズ・温度感）
-3. 次のアクションの目的設定
-4. 複数の返信候補生成
-5. リスク評価（距離の詰めすぎ等）
+### 前提条件
 
-👉 **重要なのは「何を出すか」ではなく「どう考えて出したか」**
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/)（パッケージ管理）
+- MLflow サーバー（トレーシング用）
+- OpenAI API キー
 
----
+### インストール
 
-### ■ Behavior Tracing（意思決定の可視化）
-
-各生成に対して以下をログとして保存する：
-
-```json
-{
-  "phase": "rapport_building",
-  "intent": "共通点の拡張",
-  "strategy": "質問 + 共感",
-  "candidates": ["...", "...", "..."],
-  "risk": "距離を詰めすぎる可能性あり",
-  "selected": 1
-}
+```bash
+git clone https://github.com/your-org/dating-conversation-agent.git
+cd dating-conversation-agent
+uv sync
 ```
 
-これにより以下を追跡可能とする：
+### 環境変数
 
-* Agent reasoning（思考プロセス）
-* Decision（選択）
-* Action（実行）
-
----
-
-### ■ Evaluation Design
-
-本システムは、Pass/Failではなく
-**多軸評価によるスコアリング**を採用する。
-
-#### External Metrics（外部評価）
-
-* 返信成功率
-* 会話継続率
-* デート成立率
-
-#### Internal Metrics（内部評価）
-
-* 候補採用率
-* 手修正率
-* 再生成率
-* 応答速度
-
----
-
-### ■ ADLC（Agentic Development Loop）
-
-本システムは以下のループで継続的に改善される：
-
-```text
-Generate
-  ↓
-Log
-  ↓
-Evaluate
-  ↓
-Tune（Prompt / Strategy）
-  ↓
-Re-Generate
-```
-
-👉 **「完成するシステム」ではなく「成長するシステム」**
-
----
-
-### ■ Human-in-the-Loop
-
-本システムは完全自律ではなく、
-**Human-in-the-Loop（監督型）**を採用する。
-
-* ユーザーが最終送信を行う
-* エージェントは意思決定を支援する
-
-これにより：
-
-* 安全性の確保
-* 実運用データの取得
-* 段階的な自律性の向上
-
-を実現する。
-
----
-
-## 🧠 Concept
-
-本プロジェクトは、
-
-👉 **「エージェントを作る」のではなく「エージェントを育てる」**
-
-という思想に基づいている。
-
-システムは完成するものではなく、
-**運用を通じて価値が向上し続ける資産**として設計されている。
-
----
-
-## 📌 Notes
-
-* 本システムは自動送信を行わない（規約・倫理配慮）
-* Chrome Extension による半自動支援を採用
-* ローカル環境で動作可能
-
----
-
-## ⚙️ Environment Configuration
-
-### DATA_SOURCE（データ参照先の切り替え）
-
-`.env` の `DATA_SOURCE` でユーザーデータの参照先を切り替えられます。
-
-| 値 | 参照ディレクトリ | 用途 |
-|----|-----------------|------|
-| `test`（デフォルト） | `data/test_user/` | 開発・テスト用 |
-| `prod` | `data/user/` | 本番運用 |
-
-#### 設定例
+`.env` ファイルをプロジェクトルートに作成します。
 
 ```env
-# テストデータを使用（デフォルト）
-DATA_SOURCE=test
-
-# 本番データを使用
-DATA_SOURCE=prod
+OPENAI_API_KEY=your_openai_api_key
 ```
 
-#### 注意事項
-
-- 未設定時は `test` がデフォルトとして適用されます。
-- `test` / `prod` 以外の値を設定した場合、起動時にエラーとなります。
-
----
-
-## 🧪 Standalone Tool Evaluation
-
-`generate_reply` ツールを単体で実行し、ケースごとに簡易スコアを出力できます。
-
-### 1. ケース定義
-
-評価ケースは以下にあります。
-
-* `eval/generate_reply_cases.yaml`
-
-`user_id` に対応する `data/test_user/{user_id}.yaml` を読み込み、
-生成された返信に対して以下を評価します。
-
-* 最低文字数
-* 必須キーワード（any / all）
-* 禁止キーワード
-
-### 2. 実行コマンド
+### MLflow の起動
 
 ```bash
-uv run python scripts/eval_generate_reply.py
+mlflow server --host 127.0.0.1 --port 5000
 ```
 
-### 3. 出力
+## 実行
 
-実行ごとにタイムスタンプ付きディレクトリが作成されます。
-
-* `eval/results/{timestamp}/summary.json`
-* `eval/results/{timestamp}/results.json`
-* `eval/results/{timestamp}/results.csv`
-
-### 4. オプション
+### サーバー起動
 
 ```bash
-uv run python scripts/eval_generate_reply.py \
-  --cases eval/generate_reply_cases.yaml \
-  --data-dir data/test_user \
-  --output-dir eval/results
+uvicorn src.app.agent.entrypoint:app --reload
 ```
 
----
-
-## 🧪 Standalone Tool Evaluation (score_reply_quality)
-
-`score_reply_quality` ツールを単体で実行し、生成済み返信の品質判定をケースごとに評価できます。
-
-### 1. ケース定義
-
-評価ケースは以下にあります。
-
-* `eval/score_reply_quality_cases.yaml`
-
-`user_id` に対応する `data/test_user/{user_id}.yaml` を読み込み、
-`generated_reply` を評価対象として `score_reply_quality` に渡します。
-
-### 2. 実行コマンド
+### 返信生成リクエスト
 
 ```bash
-uv run python scripts/eval_score_reply_quality.py
+curl -X POST http://127.0.0.1:8000/reply \
+  -H "Content-Type: application/json" \
+  -d '{"id": "with_0001_test"}'
 ```
 
-### 3. 出力
-
-実行ごとにタイムスタンプ付きディレクトリが作成されます。
-
-* `eval/results/{timestamp}/summary.json`
-* `eval/results/{timestamp}/results.json`
-* `eval/results/{timestamp}/results.csv`
-
-### 4. オプション
+ヘルスチェック:
 
 ```bash
-uv run python scripts/eval_score_reply_quality.py --cases eval/score_reply_quality_cases.yaml --data-dir data/test_user --output-dir eval/results
+curl http://127.0.0.1:8000/health
 ```
 
+## ユーザーデータ形式
+
+`data/user/` に YAML ファイルを配置します。
+
+ファイル名はuser_idと同一（with_xxxx.yaml）にすること
+
+```yaml
+user_id: with_xxxx
+
+profile:
+  name: はる
+  age: 28
+  raw_profile_text: |
+    プロフィールテキスト
+  profile_summary: サマリ
+  meeting_timing_preference: 気が合えば会いたい
+  picture:
+    - description: 焼肉を食べている写真
+      message_hint: 共通点として話題にできるかも
+
+conversation:
+  messages: []
+  updated_at: 2026-04-11T00:40:00+09:00
+```
+
+## プロジェクト構成
+
+```
+src/app/agent/
+├── core/
+│   ├── config/       # 設定
+│   ├── graph/        # LangGraph グラフ定義
+│   ├── nodes/        # 各ノード実装
+│   │   ├── base_node.py
+│   │   ├── decision/
+│   │   ├── action/
+│   │   ├── observe/
+│   ├── schemas/      # 状態・スキーマ定義
+│   ├── services/     # 外部リソースアクセス
+│   ├── tools/        # ツール群
+│   └── utils/        # ロガー・共有ストアなど
+├── agent_ops/        # エージェント運用系（未実装）
+└── entrypoint.py     # FastAPI エントリポイント
+data/
+├── user/             # ユーザープロフィール・会話履歴 (YAML)
+├── test_user/        # テスト用ユーザーデータ
+└── agent_logs/       # エージェントヒント
+```
+
+## 技術スタック
+
+| カテゴリ | ライブラリ |
+|---|---|
+| API サーバー | FastAPI + Uvicorn |
+| グラフ実行 | LangGraph |
+| LLM | LangChain + OpenAI |
+| トレーシング | MLflow |
+| バリデーション | Pydantic |
