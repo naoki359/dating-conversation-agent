@@ -126,6 +126,10 @@ curl http://127.0.0.1:8000/health
 
 VSCodeの拡張機能であるREST Clientをインストールすることで`./requests/reply.rest`からAPIのキックが可能
 
+#### 実行結果
+
+![response](docs/images/response_1.png)
+
 ## ユーザーデータ形式
 
 `data/test_user/` に YAML ファイルを配置します。
