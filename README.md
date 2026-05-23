@@ -78,6 +78,7 @@ uv sync
 
 ```env
 OPENAI_API_KEY=your_openai_api_key
+AGENT_PIPELINE_MODE=react
 ```
 
 ### MLflow の起動
