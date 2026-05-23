@@ -21,6 +21,7 @@ logs/
 # data
 /data/user
 /data/response
+/data/self_profile.yaml
 
 # docs
 /docs/issues

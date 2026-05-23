@@ -87,6 +87,22 @@ AGENT_PIPELINE_MODE=react
 uv run mlflow server --host 127.0.0.1 --port 5000
 ```
 
+### プロフィールファイルの作成
+
+`data/self_profile.sample.yaml`をコピーして`self_profile.yaml`を作成してください。
+
+**bash / macOS / Linux:**
+
+```bash
+cp data/self_profile.sample.yaml data/self_profile.yaml
+```
+
+**PowerShell:**
+
+```powershell
+Copy-Item data/self_profile.sample.yaml data/self_profile.yaml
+```
+
 ## 実行
 
 ### サーバー起動

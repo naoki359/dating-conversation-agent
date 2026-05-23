@@ -24,13 +24,6 @@ class ToolEnum(Enum):
         "shared_store に profile と conversation が保存され、canvas に conversation_facts が展開された状態になる"
     )
 
-    DECIDE_CONVERSATION_TOPIC = (
-        DecideConversationTopicTool().execute,
-        "会話履歴を分析し、話題を継続するべきか切り替えるべきかを判定する。会話が単調になるのを防ぐ。",
-        "GENERATE_REPLY の前に必ず実行すること",
-        "canvas に conversation_topic_strategy が保存され、返信生成ノードが話題方針を参照できる状態になる"
-    )
-
     GENERATE_REPLY = (
         GenerateReplyTool().execute,
         "相手のプロフィールと会話履歴を参考に、自然な返信を生成する。一回だけ実行することを想定している",

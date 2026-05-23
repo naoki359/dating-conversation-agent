@@ -4,10 +4,12 @@ from collections.abc import MutableMapping
 from contextvars import ContextVar, Token
 from copy import deepcopy
 from dataclasses import dataclass
+from pathlib import Path
 from threading import Lock
 from time import time
 from typing import Any, Literal, TypedDict
-from textwrap import dedent
+
+import yaml
 
 
 MeetingTimingPreference = Literal[
@@ -82,47 +84,26 @@ class SourceData(TypedDict, total=False):
 # ============================================
 # デフォルト値
 # ============================================
-DEFAULT_SELF_PROFILE: Profile = {
-    "name": "角田 直樹",
-    "age": 32,
-    "raw_profile_text": dedent("""
-        [basic_info]
-        - name: 角田 直樹
-        - age: 32
-        - location: 所沢
+_SELF_PROFILE_YAML_PATH = Path(__file__).resolve().parents[5] / "data" / "self_profile.yaml"
 
-        [interests]
-        - お酒は好き
-          - ウィスキーはハイボールなら飲める。ストレートやロックは苦手。
-          - 日本酒は好き。量飲めなくなってきたかから最近よく飲む
-          - ビールも好き
-          - 二杯目以降はウーロンハイを頼むことが多い。優しい味がする
-        - アニメ/漫画/ゲーム
-          - 今期は「日本三国」と「とんがり防止のアトリエ」が面白い
-          - コナンは毎年映画も見ている。GWも新作を見てきた
-        - サウナ/温泉
-          - 近くの銭湯に行くのが好き。好きな銭湯は近くて安くて人がいない
-        - 水族館
-          - クラゲが好き
-          - シーパラは小学生の遠足で行った。内容は全く覚えていない
-        - 旅行(引きこもりだからそんなに好みではない。でも綺麗な景色は好き)
-          - 沖縄
-            - こうりじまに行った。レンタカーを借りて島を一周した。橋を渡るときの景色がすごくきれいだった。
-        - 猫/犬
-        - ポケモン/ソウルシリーズ
-        - 居酒屋/日本酒/ビール
-        - 焼肉/寿司/肉寿司
-          - 好きな焼肉屋は上野にある「焼肉ごぉ はなれ」ってお店が好きです。よく行くのは焼肉ライク。
-        - Vtuber/配信者
-          - ホロライブの兎田ぺこらをよく見ている。ゲーム実況が好き
-          - にじさんじはあまり詳しくはないけどエルエルは好き。有名どころは名前くらいなら知っているが配信はあまり見ていない
-        - ミステリー小説
-          - どんでん返しがある作品が好き。社会派も結構好き。どちらも好き
-          - 最近読んだ作品：「夜明けまでに誰かが」
-            - この作者の小説を依然読んだことがあったから、今回も期待して読んだ。少し重めだったけど期待通りの面白さだった。
-    """).strip(),
-    "profile_summary": ""
-}
+
+def _load_default_self_profile() -> Profile:
+    if not _SELF_PROFILE_YAML_PATH.exists():
+        raise FileNotFoundError(f"self_profile.yaml が見つかりません: {_SELF_PROFILE_YAML_PATH}")
+    with _SELF_PROFILE_YAML_PATH.open("r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    return {
+        "name": data["name"],
+        "age": data["age"],
+        "raw_profile_text": data["raw_profile_text"].strip(),
+        "profile_summary": data.get("profile_summary", ""),
+        "meeting_timing_preference": normalize_meeting_timing_preference(
+            data.get("meeting_timing_preference")
+        ),
+    }
+
+
+DEFAULT_SELF_PROFILE: Profile = _load_default_self_profile()
 
 
 # ============================================
