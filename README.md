@@ -74,11 +74,14 @@ uv sync
 
 ### 環境変数
 
-`.env` ファイルをプロジェクトルートに作成します。
+`.env` ファイルをプロジェクトルートに作成します。`.env` ファイルの `OPENAI_API_KEY` に、ご自身の OpenAI API Key を設定してください。
 
-```env
-OPENAI_API_KEY=your_openai_api_key
-AGENT_PIPELINE_MODE=react
+```bash
+cp .env.example .env
+```
+
+```powershell
+Copy-Item .env.example .env
 ```
 
 ### MLflow の起動
@@ -140,7 +143,7 @@ curl http://127.0.0.1:8000/health
 
 #### 捕捉（推奨）
 
-VSCodeの拡張機能であるREST Clientをインストールすることで`./requests/reply.rest`からAPIのキックが可能
+VSCodeの拡張機能であるREST Clientをインストールすることで`requests/reply.rest`からAPIのキックが可能
 
 #### 実行結果
 
