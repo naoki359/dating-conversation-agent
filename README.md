@@ -207,3 +207,37 @@ data/
 | LLM | LangChain + OpenAI |
 | トレーシング | MLflow |
 | バリデーション | Pydantic |
+
+## カスタムエージェントの作成方針
+
+**基本方針: AI の自律性よりも確実に動くアウトプットを優先する**
+
+### Agent / Skill / Instructions の使い分け
+
+| 種類 | 用途 |
+|---|---|
+| `copilot-instructions.md` | 全作業に共通するルール（コーディング規約、言語など）を常時読み込ませる |
+| `.github/agents/*.agent.md` | 特定タスク専用のエージェント。ユーザーが明示的に選択して使う |
+| `.github/skills/*/SKILL.md` | エージェントが参照する専門知識。タスク実行中にのみ読み込まれる |
+
+### エージェント設計のルール
+
+> **公式ドキュメントとの相違点**  
+> [GitHub 公式ドキュメント](https://docs.github.com/ja/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/create-custom-agents) では、`description` にエージェントの「専門領域・役割（ロール）」を記述することを推奨しています（例: `test-specialist`、`implementation-planner`）。  
+> このプロジェクトでは、AI の自律的な判断よりも**確実に動くアウトプットを優先**するため、ロール型ではなく**タスク型**（やることを明確に限定した専用エージェント）を採用しています。
+
+- **タスク型で定義する** — 「ノード作成」「Issue 作成」など、やることを明確にした専用エージェントとして作る（ロール型は使わない）
+- **ツールを最小限にする** — `tools:` には必要なものだけを列挙し、意図しない副作用を防ぐ
+- **人間のチェックポイントを明示する** — 取り消しが難しい操作（リモートへの push・Issue 作成など）はエージェント本文に「承認を得るまで実行しない」と明記する
+- **プロジェクト固有ルールはエージェント本文に書く** — インポート規則・ディレクトリ構成・モック制約などを毎回 Copilot に伝えなくて済むようにする
+
+### 現在のエージェント一覧
+
+| エージェント | 役割 |
+|---|---|
+| `create-node` | `BaseNode` を継承した新規ノードを作成する |
+| `create-tool` | エージェントが実行するツールを実装する |
+| `create-unit-test` | pytest を使ったユニットテストを作成する |
+| `create-eval-script` | ツール単体の評価スクリプトを作成する |
+| `create-issue` | 要件定義を GitHub Issue として作成・登録する |
+

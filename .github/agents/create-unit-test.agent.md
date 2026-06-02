@@ -1,5 +1,5 @@
 ---
-name: create_unit_test
+name: create-unit-test
 description: "単体テストの作成を行う。pytestを使ってテストコードを生成する。テスト作成、ユニットテスト、テストケース追加、テストファイル生成などの要求に応じる。"
 tools: [read, search, edit, todo]
 ---

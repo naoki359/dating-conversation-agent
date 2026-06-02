@@ -1,7 +1,7 @@
 # Dating Conversation Agent - GitHub Copilot用カスタム指示
 
 ## プロジェクト概要
-これはLangGraphを使用したグラフベースのワークフローのPythonベースのデーティング会話エージェントです。コアアーキテクチャは`base_node.py`を継承したノードを中心に構成されています。
+これはLangGraphを使用したグラフベースのワークフローのPythonベースの会話支援エージェントです。コアアーキテクチャは`base_node.py`を継承したノードを中心に構成されています。
 
 ## コーディングパターン
 - すべてのノードは`src/app/agent/core/nodes/base_node.py`を継承しなければなりません。

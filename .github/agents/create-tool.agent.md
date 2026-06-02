@@ -1,5 +1,5 @@
 ---
-name: create_tool
+name: create-tool-agent
 description: Agent responsible for implementing tools executed by the agent
 ---
 

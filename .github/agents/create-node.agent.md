@@ -1,5 +1,5 @@
 ---
-name: create_node
+name: create-node-agent
 description: An agent that creates nodes based on requirements and specifications
 ---
 

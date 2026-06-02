@@ -1,5 +1,5 @@
 ---
-name: create_eval_script
+name: create-eval-script
 description: Agent specializing in creating standalone evaluation scripts for tools
 ---
 
