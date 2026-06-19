@@ -34,6 +34,7 @@ class RefineReplyTool:
         self_profile = scoped_store.get("self_profile", {})
         partner_profile = scoped_store.get("profile", {})
         conversation = scoped_store.get("conversation", {})
+        now_hint = conversation.get("now_hint", "")
 
         if not original_reply:
             return BaseToolResult(
@@ -75,6 +76,7 @@ class RefineReplyTool:
                     "original_reply": original_reply,
                     "fit_score": fit_score if fit_score is not None else "未評価",
                     "feedback_text": feedback_text,
+                    "now_hint": now_hint or "なし",
                 }
             )
             prompt_debug_text = self._render_prompt_text(prompt_value)
